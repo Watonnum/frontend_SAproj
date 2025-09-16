@@ -23,7 +23,7 @@ export default function CreatePage() {
     category: "",
     price: "",
     stock: "",
-    status: "", // เปลี่ยนจาก "active" เป็น "available" ตาม backend
+    status: "",
     description: "",
     manufactureDate: "",
     expirationDate: "",
@@ -182,7 +182,7 @@ export default function CreatePage() {
       category: "",
       price: "",
       stock: "",
-      status: "available",
+      status: "active",
       description: "",
       manufactureDate: "",
       expirationDate: "",
