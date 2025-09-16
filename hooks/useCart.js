@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { cartApi } from "../lib/api";
 
-export const useCart = (userId = "guest") => {
+export function useCart(userId = "guest") {
   const [cart, setCart] = useState({ item: [], total: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -82,5 +82,16 @@ export const useCart = (userId = "guest") => {
     } finally {
       setLoading(false);
     }
-  });
-};
+  }, [userId]);
+
+  return {
+    cart,
+    loading,
+    error,
+    fetchCart,
+    addItem,
+    updateQuantity,
+    removeItem,
+    clearCart,
+  };
+}
