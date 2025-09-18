@@ -93,10 +93,6 @@ export default function ShopPage() {
                   <Button
                     onClick={() => {
                       handleAdd(p._id);
-                      console.log(
-                        p,
-                        "already clicked. handleAdd method running"
-                      );
                     }}
                     className="w-full cursor-pointer"
                   >

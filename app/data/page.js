@@ -65,8 +65,8 @@ export default function DataPage() {
   ].map((cat) => ({ value: cat, label: cat }));
 
   const statusOptions = [
-    { value: "available", label: "พร้อมขาย" },
-    { value: "unavailable", label: "ไม่พร้อมขาย" },
+    { value: "active", label: "พร้อมขาย" },
+    { value: "inactive", label: "ไม่พร้อมขาย" },
   ];
 
   // แสดง Toast notification

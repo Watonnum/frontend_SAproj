@@ -21,14 +21,14 @@ export default function CartPage() {
 
   useEffect(() => {
     fetchCart?.();
-  }, []);
+  }, [fetchCart]);
 
   const handleQtyChange = (item, delta) => {
     const newQty = item.quantity + delta;
-    if (newQty <= 0) return;
+    if (newQty <= 0 || newQty == 0)
+      return removeItem(item.productId._id || item.productId);
     updateQuantity(item.productId._id || item.productId, newQty);
   };
-  console.log("1", cart);
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -46,7 +46,7 @@ export default function CartPage() {
           </div>
         )}
 
-        {!loading && cart?.items?.length === 0 && (
+        {cart?.items?.length === (0 || undefined) && (
           <p className="text-gray-600">ยังไม่มีสินค้าในตะกร้า</p>
         )}
 
@@ -109,7 +109,7 @@ export default function CartPage() {
         isOpen={confirmClear}
         onClose={() => setConfirmClear(false)}
         onConfirm={() => {
-          clear();
+          clearCart();
           setConfirmClear(false);
         }}
         title="ยืนยันการล้างตะกร้า"

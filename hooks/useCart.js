@@ -24,7 +24,13 @@ export function useCart(userId = "guest") {
       setLoading(true);
 
       try {
+        console.log(
+          "productId : " + productId + "\n",
+          "qty : " + quantity + "\n",
+          "userId : " + userId + "\n"
+        );
         const data = await cartApi.addToCart(productId, quantity, userId);
+        console.log(data);
         setCart(data);
       } catch (error) {
         setError(error.message || "เพิ่มสินค้าล้มเหลว");

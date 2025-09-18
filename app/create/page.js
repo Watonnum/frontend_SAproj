@@ -104,13 +104,13 @@ export default function CreatePage() {
       newErrors.stock = "กรุณากรอกจำนวนสต็อกที่ถูกต้อง";
     }
 
-    if (!formData.manufactureDate) {
-      newErrors.manufactureDate = "กรุณาเลือกวันที่ผลิต";
-    }
+    // if (!formData.manufactureDate) {
+    //   newErrors.manufactureDate = "กรุณาเลือกวันที่ผลิต";
+    // }
 
-    if (!formData.expirationDate) {
-      newErrors.expirationDate = "กรุณาเลือกวันหมดอายุ";
-    }
+    // if (!formData.expirationDate) {
+    //   newErrors.expirationDate = "กรุณาเลือกวันหมดอายุ";
+    // }
 
     // ตรวจสอบว่าวันหมดอายุต้องมากกว่าวันที่ผลิต
     if (formData.manufactureDate && formData.expirationDate) {
@@ -130,6 +130,7 @@ export default function CreatePage() {
   };
 
   const handleSubmit = async (e) => {
+    console.log("handleSubmit at create page: sending");
     e.preventDefault();
 
     if (!validateForm()) {
@@ -152,8 +153,8 @@ export default function CreatePage() {
           details: formData.description.trim() || undefined,
         },
         expiration_date: {
-          product_manufacture: new Date(formData.manufactureDate).toISOString(),
-          product_expire: new Date(formData.expirationDate).toISOString(),
+          product_manufacture: new Date(formData.manufactureDate) || undefined,
+          product_expire: new Date(formData.expirationDate) || undefined,
         },
       };
 
@@ -174,6 +175,8 @@ export default function CreatePage() {
     } finally {
       setLoading(false);
     }
+
+    console.log("handleSubmit at create page: check");
   };
 
   const handleReset = () => {
@@ -261,7 +264,6 @@ export default function CreatePage() {
                     type="date"
                     value={formData.expirationDate}
                     onChange={handleChange}
-                    required
                     error={errors.expirationDate}
                     className="text-black opacity-40"
                   />

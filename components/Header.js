@@ -34,7 +34,19 @@ export default function Header() {
               href="/data"
               className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
-              ข้อมูล
+              การจัดการ
+            </Link>
+            <Link
+              href="/shop"
+              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              เลือกสินค้า
+            </Link>
+            <Link
+              href="/cart"
+              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              ตะกร้าสินค้า
             </Link>
             <Link
               href="/create"

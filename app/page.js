@@ -245,7 +245,7 @@ export default function Home() {
           </div>
 
           {/* Recent Activities */}
-          <div className="lg:col-span-2">
+          {/* <div className="lg:col-span-2">
             <Card>
               <CardHeader>
                 <CardTitle>กิจกรรมล่าสุด</CardTitle>
@@ -285,7 +285,7 @@ export default function Home() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </div> */}
         </div>
       </main>
     </div>
