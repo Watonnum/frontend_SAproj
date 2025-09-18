@@ -4,19 +4,31 @@ import Button from "../../components/Button";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import { useCart } from "../../hooks/useCart";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function CartPage() {
-  const { cart, loading, error, updateQuantity, removeItem, clearCart } =
-    useCart();
+  const {
+    cart,
+    loading = false,
+    error = null,
+    updateQuantity,
+    removeItem,
+    clearCart,
+    fetchCart,
+  } = useCart() || {};
+
   const [confirmClear, setConfirmClear] = useState(false);
+
+  useEffect(() => {
+    fetchCart?.();
+  }, []);
 
   const handleQtyChange = (item, delta) => {
     const newQty = item.quantity + delta;
     if (newQty <= 0) return;
     updateQuantity(item.productId._id || item.productId, newQty);
   };
-
+  console.log("1", cart);
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -34,13 +46,13 @@ export default function CartPage() {
           </div>
         )}
 
-        {!loading && cart.item.length === 0 && (
+        {!loading && cart?.items?.length === 0 && (
           <p className="text-gray-600">ยังไม่มีสินค้าในตะกร้า</p>
         )}
 
-        {cart.item.length > 0 && (
+        {cart?.items?.length > 0 && (
           <div className="space-y-4">
-            {cart.item.map((it) => (
+            {cart.items.map((it) => (
               <div
                 key={it.productId._id || it.productId}
                 className="flex items-center justify-between p-4 bg-white rounded border"
@@ -80,7 +92,7 @@ export default function CartPage() {
 
             <div className="flex justify-between items-center mt-6">
               <div className="text-lg font-semibold">
-                รวมทั้งสิ้น: ฿{cart.total.toLocaleString()}
+                รวมทั้งสิ้น: ฿{cart?.total.toLocaleString()}
               </div>
               <div className="space-x-3">
                 <Button variant="outline" onClick={() => setConfirmClear(true)}>

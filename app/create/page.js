@@ -241,7 +241,6 @@ export default function CreatePage() {
                     onChange={handleChange}
                     options={categories}
                     placeholder="เลือกหมวดหมู่สินค้า"
-                    required
                     error={errors.category}
                     className="text-black opacity-40"
                   />
@@ -252,7 +251,6 @@ export default function CreatePage() {
                     type="date"
                     value={formData.manufactureDate}
                     onChange={handleChange}
-                    required
                     error={errors.manufactureDate}
                     className="text-black opacity-40"
                   />

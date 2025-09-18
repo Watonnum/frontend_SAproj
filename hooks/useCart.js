@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { cartApi } from "../lib/api";
 
 export function useCart(userId = "guest") {
-  const [cart, setCart] = useState({ item: [], total: 0 });
+  const [cart, setCart] = useState({ userId, items: [], total: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
