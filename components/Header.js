@@ -2,57 +2,68 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { ShoppingCart, MapPin, Coins } from "lucide-react";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="bg-white shadow-lg border-b border-gray-200">
+    <header className="bg-[var(--color-surface)] shadow-sm border-b brand-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">C</span>
+          {/* Brand */}
+          <div className="flex items-center space-x-3">
+            <Link href="/" className="flex items-center space-x-3">
+              <div className="w-9 h-9 rounded-lg bg-[var(--color-primary)] flex items-center justify-center">
+                <Coins className="w-5 h-5 text-[var(--color-on-primary)]" />
               </div>
-              <span className="text-xl font-bold text-gray-900">
-                CRUD System
-              </span>
+              <div className="leading-tight">
+                <div className="text-lg font-extrabold tracking-tight text-[var(--color-primary)]">
+                  ยายรวย
+                </div>
+                <div className="text-xs brand-text-muted flex items-center gap-1">
+                  <span>Daily Store</span>
+                  <span>·</span>
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>เอกชัย · บางบอน</span>
+                </div>
+              </div>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
+          <nav className="hidden md:flex items-center space-x-4">
             <Link
               href="/"
-              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              className="brand-text-muted hover:text-[var(--color-primary)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
               Dashboard
             </Link>
             <Link
               href="/data"
-              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              className="brand-text-muted hover:text-[var(--color-primary)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
               การจัดการ
             </Link>
             <Link
               href="/shop"
-              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              className="brand-text-muted hover:text-[var(--color-primary)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
               เลือกสินค้า
             </Link>
             <Link
-              href="/cart"
-              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              ตะกร้าสินค้า
-            </Link>
-            <Link
               href="/create"
-              className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+              className="bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:brightness-110 px-4 py-2 rounded-md text-sm font-medium transition-colors"
             >
               + เพิ่มข้อมูล
+            </Link>
+            <Link
+              href="/cart"
+              className="ml-2 inline-flex items-center justify-center h-10 w-10 rounded-lg border brand-border brand-text-muted hover:text-[var(--color-primary)] hover:bg-black/5"
+              aria-label="ตะกร้าสินค้า"
+              title="ตะกร้าสินค้า"
+            >
+              <ShoppingCart className="w-5 h-5" />
             </Link>
           </nav>
 
@@ -60,7 +71,7 @@ export default function Header() {
           <div className="md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-gray-700 hover:text-blue-600 p-2"
+              className="brand-text-muted hover:text-[var(--color-primary)] p-2"
             >
               <svg
                 className="w-6 h-6"
@@ -90,28 +101,43 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 py-4">
+          <div className="md:hidden border-t brand-border py-4">
             <div className="flex flex-col space-y-2">
               <Link
                 href="/"
-                className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                className="brand-text-muted hover:text-[var(--color-primary)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Dashboard
               </Link>
               <Link
                 href="/data"
-                className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                className="brand-text-muted hover:text-[var(--color-primary)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
-                ข้อมูล
+                การจัดการ
+              </Link>
+              <Link
+                href="/shop"
+                className="brand-text-muted hover:text-[var(--color-primary)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                เลือกสินค้า
               </Link>
               <Link
                 href="/create"
-                className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-md text-sm font-medium transition-colors w-fit"
+                className="bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:brightness-110 px-4 py-2 rounded-md text-sm font-medium transition-colors w-fit"
                 onClick={() => setIsMenuOpen(false)}
               >
                 + เพิ่มข้อมูล
+              </Link>
+              <Link
+                href="/cart"
+                className="inline-flex items-center gap-2 brand-text-muted hover:text-[var(--color-primary)] px-3 py-2 rounded-md text-sm font-medium transition-colors w-fit"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <ShoppingCart className="w-4 h-4" />
+                ตะกร้าสินค้า
               </Link>
             </div>
           </div>

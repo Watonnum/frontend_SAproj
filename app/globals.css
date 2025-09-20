@@ -1,30 +1,44 @@
 @import "tailwindcss";
 
-/* :root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Brand tokens: default theme Navy–Cream */
+:root {
+  --color-primary: #0b3a5b;      /* Navy */
+  --color-accent:  #c8a96a;      /* Soft Gold */
+  --color-bg:      #f6f0e8;      /* Cream */
+  --color-surface: #ffffff;      /* White */
+  --color-text:    #0f172a;      /* Slate-900 */
+  --color-muted:   #475569;      /* Slate-600 */
+  --color-border:  #e5e7eb;      /* Gray-200 */
+  --color-on-primary: #ffffff;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Optional alternate theme: Olive–Gold */
+[data-theme="olive"] {
+  --color-primary: #556b2f;      /* Olive */
+  --color-accent:  #d4af37;      /* Gold */
+  --color-bg:      #faf8f0;      /* Warm Light */
+  --color-surface: #ffffff;
+  --color-text:    #0f172a;
+  --color-muted:   #475569;
+  --color-border:  #e5e7eb;
+  --color-on-primary: #ffffff;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Base */
+html, body {
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Utility helpers for brand look */
+.brand-surface {
+  background: var(--color-surface);
 }
 
-input {
-  color: black;
-} */
+.brand-border {
+  border-color: var(--color-border);
+}
+
+.brand-text-muted {
+  color: var(--color-muted);
+}

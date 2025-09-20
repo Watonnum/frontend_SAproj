@@ -1,0 +1,5 @@
+{
+  // Hide Copilot code references like "Similar code found with 1 license type"
+  "github.copilot.inlineSuggest.enableCodeReferences": false,
+  "github.copilot.chat.enableCodeReferences": false
+}

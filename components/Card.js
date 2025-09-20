@@ -13,7 +13,7 @@ export default function Card({
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-md border border-gray-200 ${paddingClasses[padding]} ${className}`}
+      className={`brand-surface rounded-2xl shadow-sm border brand-border ${paddingClasses[padding]} ${className}`}
       {...props}
     >
       {children}
@@ -23,7 +23,7 @@ export default function Card({
 
 export function CardHeader({ children, className = "" }) {
   return (
-    <div className={`border-b border-gray-200 pb-4 mb-4 ${className}`}>
+    <div className={`border-b brand-border pb-4 mb-4 ${className}`}>
       {children}
     </div>
   );
@@ -31,7 +31,9 @@ export function CardHeader({ children, className = "" }) {
 
 export function CardTitle({ children, className = "" }) {
   return (
-    <h2 className={`text-xl font-semibold text-gray-900 ${className}`}>
+    <h2
+      className={`text-xl font-semibold text-[var(--color-text)] ${className}`}
+    >
       {children}
     </h2>
   );
