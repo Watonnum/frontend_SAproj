@@ -99,7 +99,7 @@ export function useProducts() {
 
 // Custom hook สำหรับดึงข้อมูลสินค้าเดี่ยว
 export function useProduct(id) {
-  const [product, setProduct] = useState(null);
+  const [products, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -125,7 +125,8 @@ export function useProduct(id) {
   }, [fetchProduct]);
 
   return {
-    product,
+    products,
+    setProduct,
     loading,
     error,
     refetch: fetchProduct,

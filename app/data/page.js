@@ -13,13 +13,18 @@ import Input from "../../components/Input";
 import Select from "../../components/Select";
 import Modal from "../../components/Modal";
 import { useProducts } from "../../hooks/useProducts";
+import { useCategories } from "@/hooks/useCategories";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import Toast from "../../components/Toast";
 
 export default function DataPage() {
   // ใช้ custom hook สำหรับจัดการ products
   const { products, loading, error, deleteProduct } = useProducts();
-
+  const {
+    categories: categoriesData,
+    loading: categoriesLoading,
+    error: categoriesError,
+  } = useCategories();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
@@ -38,35 +43,23 @@ export default function DataPage() {
   const data = products.map((product) => ({
     id: product._id,
     name: product.name || "",
-    category: product.category || "",
+    categoryId: product.categoryId,
+    categoryName:
+      categoriesData.find((cat) => cat._id === product.categoryId)?.name ||
+      "ไม่ระบุ",
     price: product.price || 0,
-    stock: product.stock || 0,
-    status: product.status || "available",
-    company: product.product_information?.company || "",
-    serialNumber: product.serialNumber || "",
-    manufactureDate: product.expiration_date?.product_manufacture
-      ? new Date(product.expiration_date.product_manufacture)
-          .toISOString()
-          .split("T")[0]
-      : "",
-    expireDate: product.expiration_date?.product_expire
-      ? new Date(product.expiration_date.product_expire)
-          .toISOString()
-          .split("T")[0]
-      : "",
-    createdAt: product.createdAt
-      ? new Date(product.createdAt).toISOString().split("T")[0]
-      : "",
+    stock: product.inStock || 0,
+    status: product.isAvailable,
   }));
 
-  // ดึง categories ที่ไม่ซ้ำกันจากข้อมูล
-  const categories = [
-    ...new Set(products.map((p) => p.category).filter(Boolean)),
-  ].map((cat) => ({ value: cat, label: cat }));
+  const category = categoriesData.map((cat) => ({
+    value: cat._id,
+    label: cat.name,
+  }));
 
   const statusOptions = [
-    { value: "active", label: "พร้อมขาย" },
-    { value: "inactive", label: "ไม่พร้อมขาย" },
+    { value: "true", label: "พร้อมขาย" },
+    { value: "false", label: "ไม่พร้อมขาย" },
   ];
 
   // แสดง Toast notification
@@ -83,9 +76,15 @@ export default function DataPage() {
     const matchesSearch = item.name
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
+
     const matchesCategory =
-      !selectedCategory || item.category === selectedCategory;
-    const matchesStatus = !selectedStatus || item.status === selectedStatus;
+      !selectedCategory || item.categoryId === selectedCategory;
+
+    let matchesStatus = true;
+    if (selectedStatus !== "") {
+      const statusBoolean = selectedStatus === "true";
+      matchesStatus = item.status === statusBoolean;
+    }
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
@@ -215,9 +214,12 @@ export default function DataPage() {
 
               <Select
                 placeholder="เลือกหมวดหมู่"
-                options={categories}
+                options={category}
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value);
+                  console.log(e.target.value);
+                }}
                 className="mb-0"
               />
 
@@ -225,7 +227,10 @@ export default function DataPage() {
                 placeholder="เลือกสถานะ"
                 options={statusOptions}
                 value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
+                onChange={(e) => {
+                  setSelectedStatus(e.target.value);
+                  console.log("selected status : ", e.target.value);
+                }}
                 className="mb-0"
               />
 
@@ -345,16 +350,17 @@ export default function DataPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
+                  {/* Loop data */}
                   {currentData.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap select-text">
                         <div className="text-sm font-medium text-gray-900">
                           {item.name}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap ">
                         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {item.category}
+                          {item.categoryName}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -363,19 +369,18 @@ export default function DataPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {item.stock}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap ">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            item.status === "active"
+                            item.status === true
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {item.status === "active"
-                            ? "พร้อมขาย"
-                            : "ไม่พร้อมขาย"}
+                          {item.status === true ? "พร้อมขาย" : "ไม่พร้อมขาย"}
                         </span>
                       </td>
+                      {/* expireDate */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {item.expireDate ? (
                           <span
@@ -406,11 +411,13 @@ export default function DataPage() {
                           "-"
                         )}
                       </td>
+                      {/* createDate */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {item.createdAt
                           ? new Date(item.createdAt).toLocaleDateString("th-TH")
                           : "-"}
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
                           <Link href={`/edit/${item.id}`}>

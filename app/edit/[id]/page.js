@@ -14,6 +14,7 @@ import Select from "../../../components/Select";
 import { useProduct, useProducts } from "../../../hooks/useProducts";
 import LoadingSpinner from "../../../components/LoadingSpinner";
 import Toast from "../../../components/Toast";
+import { useCategories } from "@/hooks/useCategories";
 
 export default function EditPage() {
   const router = useRouter();
@@ -21,18 +22,23 @@ export default function EditPage() {
   const id = params.id;
 
   const {
-    product,
+    products,
     loading: productLoading,
     error: productError,
   } = useProduct(id);
+
   const { updateProduct } = useProducts();
+
+  const { categories: categoriesData, loading: categoriesLoading } =
+    useCategories();
+
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    category: "",
+    categoryId: "",
     price: "",
-    stock: "",
-    status: "",
+    inStock: "",
+    isAvailable: "",
     description: "",
   });
   const [errors, setErrors] = useState({});
@@ -51,39 +57,44 @@ export default function EditPage() {
     );
   };
 
-  const categories = [
-    { value: "electronics", label: "อิเล็กทรอนิกส์" },
-    { value: "clothing", label: "เสื้อผ้า" },
-    { value: "books", label: "หนังสือ" },
-    { value: "food", label: "อาหาร" },
-    { value: "home_goods", label: "ของใช้ในบ้าน" },
-    { value: "sports", label: "กีฬา" },
-  ];
+  const categories =
+    categoriesData?.map((cat) => ({
+      value: cat._id,
+      label: cat.name,
+    })) || [];
 
   const statusOptions = [
-    { value: "active", label: "ใช้งาน" },
-    { value: "inactive", label: "ไม่ใช้งาน" },
+    { value: true, label: "พร้อมขาย" },
+    { value: false, label: "ไม่พร้อมขาย" },
   ];
 
   // โหลดข้อมูลเมื่อได้ product มา
   useEffect(() => {
-    if (product) {
+    if (products) {
       setFormData({
-        name: product.name || "",
-        category: product.category || "",
-        price: product.price?.toString() || "",
-        stock: product.stock?.toString() || "",
-        status: product.status || "active",
-        description: product.description || "",
+        name: products.name || "",
+        categoryId: products.categoryId || "",
+        price: products.price?.toString() || "",
+        inStock: products.inStock?.toString() || "",
+        isAvailable: products.isAvailable,
+        description: products.description || "",
       });
+      console.log(products);
     }
-  }, [product]);
+  }, [products]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let processedValue = value;
+
+    // Handle boolean conversion for isAvailable
+    if (name === "isAvailable") {
+      processedValue = value === "true";
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: processedValue,
     }));
 
     // Clear error when user starts typing
@@ -102,8 +113,8 @@ export default function EditPage() {
       newErrors.name = "กรุณากรอกชื่อสินค้า";
     }
 
-    if (!formData.category) {
-      newErrors.category = "กรุณาเลือกหมวดหมู่";
+    if (!formData.categoryId) {
+      newErrors.categoryId = "กรุณาเลือกหมวดหมู่";
     }
 
     if (
@@ -115,11 +126,11 @@ export default function EditPage() {
     }
 
     if (
-      !formData.stock ||
-      isNaN(formData.stock) ||
-      parseInt(formData.stock) < 0
+      !formData.inStock ||
+      isNaN(formData.inStock) ||
+      parseInt(formData.inStock) < 0
     ) {
-      newErrors.stock = "กรุณากรอกจำนวนสต็อกที่ถูกต้อง";
+      newErrors.inStock = "กรุณากรอกจำนวนสต็อกที่ถูกต้อง";
     }
 
     if (formData.description && formData.description.length > 500) {
@@ -142,14 +153,15 @@ export default function EditPage() {
       // เตรียมข้อมูลส่งไป API
       const productData = {
         name: formData.name.trim(),
-        category: formData.category,
+        categoryId: formData.categoryId,
         price: parseFloat(formData.price),
-        stock: parseInt(formData.stock),
-        status: formData.status,
+        inStock: parseInt(formData.inStock),
+        isAvailable: formData.isAvailable,
         description: formData.description.trim(),
       };
 
       // เรียก API อัพเดทสินค้า
+      console.log("Update product data:", productData);
       await updateProduct(id, productData);
 
       showToast("อัพเดทข้อมูลสำเร็จ", "success");
@@ -166,14 +178,14 @@ export default function EditPage() {
   };
 
   const handleReset = () => {
-    if (product) {
+    if (products) {
       setFormData({
-        name: "",
-        category: "",
-        price: "",
-        stock: "",
-        status: "active",
-        description: "",
+        name: products.name || "",
+        categoryId: products.categoryId || "",
+        price: products.price?.toString() || "",
+        inStock: products.inStock?.toString() || "",
+        isAvailable: products.isAvailable || true,
+        description: products.description || "",
       });
     }
     setErrors({});
@@ -212,7 +224,7 @@ export default function EditPage() {
     );
   }
 
-  if (!product) {
+  if (!products) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -275,13 +287,13 @@ export default function EditPage() {
 
                   <Select
                     label="หมวดหมู่"
-                    name="category"
-                    value={formData.category}
+                    name="categoryId"
+                    value={formData.categoryId}
                     onChange={handleChange}
                     options={categories}
                     placeholder="เลือกหมวดหมู่"
                     required
-                    error={errors.category}
+                    error={errors.categoryId}
                   />
 
                   <Input
@@ -299,25 +311,25 @@ export default function EditPage() {
 
                   <Input
                     label="จำนวนสต็อก"
-                    name="stock"
+                    name="inStock"
                     type="number"
-                    value={formData.stock}
+                    value={formData.inStock}
                     onChange={handleChange}
                     placeholder="0"
                     min="0"
                     required
-                    error={errors.stock}
+                    error={errors.inStock}
                   />
 
                   <div className="md:col-span-2">
                     <Select
                       label="สถานะ"
-                      name="status"
-                      value={formData.status}
+                      name="isAvailable"
+                      value={formData.isAvailable}
                       onChange={handleChange}
                       options={statusOptions}
                       required
-                      error={errors.status}
+                      error={errors.isAvailable}
                     />
                   </div>
                 </div>

@@ -53,7 +53,7 @@ export default function Home() {
     <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Head */}
       <CardHeader className="flex justify-between">
-        <CardTitle className="select-none">
+        <CardTitle>
           <p className="text-3xl">Welcomeback Boss</p>
           <p className="text-ls font-light text-gray-600">
             Welcome to the Dashboard
@@ -68,7 +68,7 @@ export default function Home() {
           </button>
 
           {/* Profile */}
-          <div className="flex rounded-xl p-2 border border-transparent hover:border-gray-400 transition-colors cursor-pointer duration-200 select-none">
+          <div className="flex rounded-xl p-2 border border-transparent hover:border-gray-400 transition-colors cursor-pointer duration-200">
             <div className="flex gap-5 rounded-full w-12 h-12 border mr-4">
               <img
                 src="https://images.unsplash.com/photo-1492633423870-43d1cd2775eb?&w=128&h=128&dpr=2&q=80"
@@ -98,9 +98,7 @@ export default function Home() {
             {mock_Stat.map((item, index) => {
               return (
                 <Card key={index}>
-                  <p className="text-xl font-light opacity-90 select-none">
-                    Total Revenue
-                  </p>
+                  <p className="text-xl font-light opacity-90">Total Revenue</p>
                   <CardContent className="my-4 text-2xl flex">
                     <div>{item?.icon}</div>
                     <p>{item?.value}</p>

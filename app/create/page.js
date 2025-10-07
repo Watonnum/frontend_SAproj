@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Header from "../../components/Header";
 import Card, {
   CardHeader,
   CardTitle,
@@ -12,23 +11,21 @@ import Button from "../../components/Button";
 import Input from "../../components/Input";
 import Select from "../../components/Select";
 import { useProducts } from "../../hooks/useProducts";
-import LoadingSpinner from "../../components/LoadingSpinner";
+import { useCategories } from "@/hooks/useCategories";
 import Toast from "../../components/Toast";
 
 export default function CreatePage() {
   const router = useRouter();
-  const { createProduct } = useProducts();
+  const { products, createProduct } = useProducts();
+  const { categories: createCategory } = useCategories();
   const [formData, setFormData] = useState({
     name: "",
-    category: "",
     price: "",
-    stock: "",
-    status: "",
+    inStock: "",
     description: "",
-    manufactureDate: "",
-    expirationDate: "",
-    serialNumber: "",
-    company: "",
+    categoryId: "",
+    images: "",
+    isAvailable: false,
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -47,18 +44,14 @@ export default function CreatePage() {
     );
   };
 
-  const categories = [
-    { value: "electronics", label: "อิเล็กทรอนิกส์" },
-    { value: "clothing", label: "เสื้อผ้า" },
-    { value: "books", label: "หนังสือ" },
-    { value: "food", label: "อาหาร" },
-    { value: "home_goods", label: "ของใช้ในบ้าน" },
-    { value: "sports", label: "กีฬา" },
-  ];
+  const categories = createCategory.map((cat) => ({
+    value: cat._id,
+    label: cat.name,
+  }));
 
   const statusOptions = [
-    { value: "active", label: "พร้อมขาย" },
-    { value: "inactive", label: "ไม่พร้อมขาย" },
+    { value: true, label: "พร้อมขาย" },
+    { value: false, label: "ไม่พร้อมขาย" },
   ];
 
   const handleChange = (e) => {
@@ -75,6 +68,8 @@ export default function CreatePage() {
         [name]: "",
       }));
     }
+
+    console.log(formData);
   };
 
   const validateForm = () => {
@@ -84,8 +79,8 @@ export default function CreatePage() {
       newErrors.name = "กรุณากรอกชื่อสินค้า";
     }
 
-    if (!formData.category) {
-      newErrors.category = "กรุณาเลือกหมวดหมู่";
+    if (!formData.categoryId) {
+      newErrors.categoryId = "กรุณาเลือกหมวดหมู่";
     }
 
     if (
@@ -97,28 +92,11 @@ export default function CreatePage() {
     }
 
     if (
-      !formData.stock ||
-      isNaN(formData.stock) ||
-      parseInt(formData.stock) < 0
+      !formData.inStock ||
+      isNaN(formData.inStock) ||
+      parseInt(formData.inStock) < 0
     ) {
-      newErrors.stock = "กรุณากรอกจำนวนสต็อกที่ถูกต้อง";
-    }
-
-    // if (!formData.manufactureDate) {
-    //   newErrors.manufactureDate = "กรุณาเลือกวันที่ผลิต";
-    // }
-
-    // if (!formData.expirationDate) {
-    //   newErrors.expirationDate = "กรุณาเลือกวันหมดอายุ";
-    // }
-
-    // ตรวจสอบว่าวันหมดอายุต้องมากกว่าวันที่ผลิต
-    if (formData.manufactureDate && formData.expirationDate) {
-      if (
-        new Date(formData.expirationDate) <= new Date(formData.manufactureDate)
-      ) {
-        newErrors.expirationDate = "วันหมดอายุต้องมากกว่าวันที่ผลิต";
-      }
+      newErrors.inStock = "กรุณากรอกจำนวนสต็อกที่ถูกต้อง";
     }
 
     if (formData.description && formData.description.length > 500) {
@@ -134,7 +112,7 @@ export default function CreatePage() {
     e.preventDefault();
 
     if (!validateForm()) {
-      return;
+      return "return nothing";
     }
 
     setLoading(true);
@@ -143,19 +121,12 @@ export default function CreatePage() {
       // เตรียมข้อมูลส่งไป API ตามโครงสร้างของ backend
       const productData = {
         name: formData.name.trim(),
-        category: formData.category,
+        categoryId: formData.categoryId,
         price: parseFloat(formData.price),
-        stock: parseInt(formData.stock),
-        status: formData.status,
-        serialNumber: formData.serialNumber.trim() || undefined,
-        product_information: {
-          company: formData.company.trim() || undefined,
-          details: formData.description.trim() || undefined,
-        },
-        expiration_date: {
-          product_manufacture: new Date(formData.manufactureDate) || undefined,
-          product_expire: new Date(formData.expirationDate) || undefined,
-        },
+        inStock: parseInt(formData.inStock),
+        isAvailable: formData.isAvailable,
+        description: formData.description,
+        images: formData.images,
       };
 
       console.log("Sending product data to backend:", productData);
@@ -182,15 +153,12 @@ export default function CreatePage() {
   const handleReset = () => {
     setFormData({
       name: "",
-      category: "",
       price: "",
-      stock: "",
-      status: "active",
+      inStock: "",
       description: "",
-      manufactureDate: "",
-      expirationDate: "",
-      serialNumber: "",
-      company: "",
+      categoryId: "",
+      images: "",
+      isAvailable: true,
     });
     setErrors({});
   };
@@ -224,6 +192,7 @@ export default function CreatePage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Name */}
                   <Input
                     label="ชื่อสินค้า"
                     name="name"
@@ -234,19 +203,19 @@ export default function CreatePage() {
                     error={errors.name}
                     className="text-black opacity-40"
                   />
-
+                  {/* Category */}
                   <Select
                     label="หมวดหมู่"
-                    name="category"
-                    value={formData.category}
+                    name="categoryId"
+                    value={formData.categoryId}
                     onChange={handleChange}
                     options={categories}
                     placeholder="เลือกหมวดหมู่สินค้า"
-                    error={errors.category}
+                    error={errors.categoryId}
                     className="text-black opacity-40"
                   />
 
-                  <Input
+                  {/* <Input
                     label="วันที่ผลิต"
                     name="manufactureDate"
                     type="date"
@@ -254,9 +223,9 @@ export default function CreatePage() {
                     onChange={handleChange}
                     error={errors.manufactureDate}
                     className="text-black opacity-40"
-                  />
+                  /> */}
 
-                  <Input
+                  {/* <Input
                     label="วันหมดอายุ"
                     name="expirationDate"
                     type="date"
@@ -274,9 +243,9 @@ export default function CreatePage() {
                     placeholder="ระบุหมายเลขผลิตภัณฑ์"
                     error={errors.serialNumber}
                     className="text-black opacity-40"
-                  />
+                  /> */}
 
-                  <Input
+                  {/* <Input
                     label="บริษัทผู้ผลิต (ไม่บังคับ)"
                     name="company"
                     value={formData.company}
@@ -284,7 +253,7 @@ export default function CreatePage() {
                     placeholder="ระบุชื่อบริษัทผู้ผลิต"
                     error={errors.company}
                     className="text-black opacity-40"
-                  />
+                  /> */}
                 </div>
               </CardContent>
             </Card>
@@ -311,14 +280,14 @@ export default function CreatePage() {
 
                   <Input
                     label="จำนวนสต็อก"
-                    name="stock"
+                    name="inStock"
                     type="number"
-                    value={formData.stock}
+                    value={formData.inStock}
                     onChange={handleChange}
                     placeholder="0"
                     min="0"
                     required
-                    error={errors.stock}
+                    error={errors.inStock}
                   />
                 </div>
               </CardContent>
@@ -333,8 +302,8 @@ export default function CreatePage() {
                 <div className="space-y-6">
                   <Select
                     label="สถานะ"
-                    name="status"
-                    value={formData.status}
+                    name="isAvailable"
+                    value={formData.isAvailable}
                     onChange={handleChange}
                     options={statusOptions}
                     required

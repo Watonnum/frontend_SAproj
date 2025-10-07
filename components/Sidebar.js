@@ -31,7 +31,7 @@ const NavItem = ({ href, icon: Icon, label }) => {
 
 export default function Sidebar() {
   return (
-    <aside className="hidden md:flex md:flex-col w-64 shrink-0 border-r brand-border bg-[var(--color-surface)] px-4 py-4 gap-6 select-none">
+    <aside className="hidden md:flex md:flex-col w-64 shrink-0 border-r brand-border bg-[var(--color-surface)] px-4 py-4 gap-6">
       {/* Brand mini */}
       <div className="px-1">
         <div className="text-xs uppercase brand-text-muted tracking-wider">
@@ -46,7 +46,7 @@ export default function Sidebar() {
         </div>
         <div className="flex flex-col gap-1">
           <NavItem href="/" icon={LayoutDashboard} label="Dashboard" />
-          <NavItem href="/data" icon={ShoppingBag} label="Orders" />
+          <NavItem href="/data" icon={ShoppingBag} label="Products" />
           <NavItem href="/customers" icon={Users} label="Customers" />
           <NavItem href="/cart" icon={ShoppingCart} label="Cart" />
         </div>

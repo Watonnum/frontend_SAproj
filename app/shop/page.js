@@ -8,6 +8,7 @@ import Toast from "../../components/Toast";
 import { useProducts } from "../../hooks/useProducts";
 import { useCart } from "../../hooks/useCart";
 import { useState } from "react";
+import Image from "next/image";
 
 export default function ShopPage() {
   const { products, loading, error } = useProducts();
@@ -28,7 +29,7 @@ export default function ShopPage() {
 
   const visibleProducts = products.filter(
     (p) =>
-      p.status === "active" &&
+      p.isAvailable === true &&
       (typeof p.stock === "number" ? p.stock > 0 : true)
   );
 
@@ -78,14 +79,21 @@ export default function ShopPage() {
             <Card key={p._id}>
               <div className="p-4 flex flex-col h-full">
                 <div className="flex-1">
+                  <Image
+                    alt="Product image"
+                    width={300}
+                    height={300}
+                    className="bg-amber-50"
+                    src={""}
+                  />
                   <h3 className="text-lg font-semibold">{p.name}</h3>
                   <p className="text-sm text-gray-500 mt-1">{p.category}</p>
                   <p className="text-gray-900 font-bold mt-2">
                     ฿{Number(p.price || 0).toLocaleString()}
                   </p>
-                  {typeof p.stock === "number" && (
+                  {typeof p.inStock === "number" && (
                     <p className="text-xs text-gray-500 mt-1">
-                      สต็อก: {p.stock}
+                      สต็อก: {p.inStock}
                     </p>
                   )}
                 </div>
