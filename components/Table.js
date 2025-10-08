@@ -130,13 +130,13 @@ const Table = ({
                   </td>
                   <td className="px-6 py-4 align-middle">
                     <div className="flex items-center gap-3">
-                      <Image
-                        src={null}
+                      {/* <Image
+                        src={row.customer?.avatar || "/default-avatar.png"}
                         alt={name}
                         width={40}
                         height={40}
                         className="h-10 w-10 rounded-full object-cover"
-                      />
+                      /> */}
                       <div>
                         <div className="text-[var(--color-text)] font-medium">
                           {name}

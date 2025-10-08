@@ -1,19 +1,19 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { categoryApi, ApiError } from "../lib/api";
+import { usersApi, ApiError } from "../lib/api";
 
 // Custom hook สำหรับจัดการ categories
-export function useCategories() {
-  const [categories, setCategories] = useState([]);
+export function useUsers() {
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   // ดึงข้อมูลหมวดหมู่ทั้งหมด
-  const fetchCategories = useCallback(async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await categoryApi.getAll();
+      const data = await usersApi.getAll();
       setCategories(data);
     } catch (err) {
       setError(
@@ -25,13 +25,13 @@ export function useCategories() {
   }, []);
 
   // สร้างหมวดหมู่ใหม่
-  const createCategory = useCallback(async (categoryData) => {
+  const createUsers = useCallback(async (usersData) => {
     setLoading(true);
     setError(null);
     try {
-      const newCategory = await categoryApi.create(categoryData);
-      setCategories((prev) => [...prev, newCategory]);
-      return newCategory;
+      const newUsers = await usersApi.create(usersData);
+      setUsers((prev) => [...prev, newUsers]);
+      return newUsers;
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : "เกิดข้อผิดพลาดในการสร้างข้อมูล"
@@ -43,17 +43,15 @@ export function useCategories() {
   }, []);
 
   // อัพเดทหมวดหมู่
-  const updateCategory = useCallback(async (id, categoryData) => {
+  const updateUsers = useCallback(async (id, usersData) => {
     setLoading(true);
     setError(null);
     try {
-      const updatedCategory = await categoryApi.update(id, categoryData);
-      setCategories((prev) =>
-        prev.map((category) =>
-          category._id === id ? updatedCategory : category
-        )
+      const updatedUsers = await usersApi.update(id, usersData);
+      setUsers((prev) =>
+        prev.map((user) => (user._id === id ? updatedUsers : user))
       );
-      return updatedCategory;
+      return updatedUsers;
     } catch (err) {
       setError(
         err instanceof ApiError
@@ -67,12 +65,12 @@ export function useCategories() {
   }, []);
 
   // ลบหมวดหมู่
-  const deleteCategory = useCallback(async (id) => {
+  const deleteUsers = useCallback(async (id) => {
     setLoading(true);
     setError(null);
     try {
-      await categoryApi.delete(id);
-      setCategories((prev) => prev.filter((category) => category._id !== id));
+      await usersApi.delete(id);
+      setCategories((prev) => prev.filter((user) => user._id !== id));
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : "เกิดข้อผิดพลาดในการลบข้อมูล"
@@ -85,34 +83,34 @@ export function useCategories() {
 
   // ดึงข้อมูลเมื่อ component mount
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    fetchUsers();
+  }, [fetchUsers]);
 
   return {
-    categories,
+    users,
     loading,
     error,
-    fetchCategories,
-    createCategory,
-    updateCategory,
-    deleteCategory,
+    fetchUsers,
+    createUsers,
+    updateUsers,
+    deleteUsers,
   };
 }
 
 // Custom hook สำหรับดึงข้อมูลหมวดหมู่เดี่ยว
 export function useCategory(id) {
-  const [categories, setCategories] = useState(null);
+  const [users, setUsers] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchCategories = useCallback(async () => {
+  const fetchUsers = useCallback(async () => {
     if (!id) return;
 
     setLoading(true);
     setError(null);
     try {
-      const data = await categoryApi.getById(id);
-      setCategories(data);
+      const data = await usersApi.getById(id);
+      setUsers(data);
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : "เกิดข้อผิดพลาดในการดึงข้อมูล"
@@ -122,18 +120,33 @@ export function useCategory(id) {
     }
   }, [id]);
 
-  // อัพเดทหมวดหมู่
-  const updateCategory = useCallback(async (id, categoryData) => {
+  const createUsers = useCallback(async (usersData) => {
     setLoading(true);
     setError(null);
     try {
-      const updatedCategory = await categoryApi.update(id, categoryData);
-      setCategories((prev) =>
-        prev.map((category) =>
-          category._id === id ? updatedCategory : category
-        )
+      const newUser = await usersApi.create(usersData);
+      setUsers((prev) => [...prev, newUser]);
+      return newUser;
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "เกิดข้อผิดพลาดในการสร้างข้อมูล"
       );
-      return updatedCategory;
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // อัพเดทหมวดหมู่
+  const updateUsers = useCallback(async (id, usersData) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const updatedUsers = await categoryApi.update(id, usersData);
+      setUsers((prev) =>
+        prev.map((category) => (category._id === id ? updatedUsers : category))
+      );
+      return updatedUsers;
     } catch (err) {
       setError(
         err instanceof ApiError
@@ -146,15 +159,33 @@ export function useCategory(id) {
     }
   }, []);
 
+  const deleteUsers = useCallback(async (id) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await usersApi.delete(id);
+      setUsers((prev) => prev.filter((user) => user._id !== id));
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "เกิดข้อผิดพลาดในการลบข้อมูล"
+      );
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    fetchUsers();
+  }, [fetchUsers]);
 
   return {
-    categories,
-    updateCategory,
+    users,
+    updateUsers,
+    createUsers,
+    deleteUsers,
     loading,
     error,
-    refetch: fetchCategories,
+    refetch: fetchUsers,
   };
 }
