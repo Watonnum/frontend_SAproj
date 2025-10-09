@@ -3,6 +3,7 @@
 import "./globals.css";
 import Sidebar from "../components/Sidebar";
 import { useEffect, useState } from "react";
+import { FaRegEye, FaRegEyeSlash } from "react-icons/fa6";
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
@@ -17,6 +18,7 @@ import Card, { CardHeader, CardTitle, CardContent } from "../components/Card";
 
 export default function RootLayout({ children }) {
   const [show, setShow] = useState(false);
+  const [isShowPassword, setIsShowPassword] = useState(false);
   const [formLogin, setFormLogin] = useState({
     email: "",
     password: "",
@@ -71,7 +73,7 @@ export default function RootLayout({ children }) {
               show ? "hidden" : ""
             }`}
           >
-            <div className="py-32">
+            <div className="py-32 select-none">
               {/* Login Component */}
               <Card>
                 <CardHeader className="font-bold text-3xl border-none text-center">
@@ -98,15 +100,36 @@ export default function RootLayout({ children }) {
                   </div>
                   <div className="flex flex-col gap-1">
                     <p className="text-lg text-gray-400">Password</p>
-                    <input
-                      type="password"
-                      name="password"
-                      onChange={handleChange}
-                      value={formLogin.password}
-                      className="text-xl bg-gray-100 w-full rounded-xl px-4 py-1
+                    <div className="relative">
+                      <input
+                        type={`${isShowPassword ? "text" : "password"}`}
+                        name="password"
+                        onChange={handleChange}
+                        value={formLogin.password}
+                        className="text-xl bg-gray-100 w-full rounded-xl px-4 py-1
                       invalid:border-pink-500 invalid:text-pink-600 focus:border-sky-500 focus:outline focus:outline-sky-500 focus:invalid:border-pink-500 focus:invalid:outline-pink-500 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 disabled:shadow-none dark:disabled:border-gray-700 dark:disabled:bg-gray-800/20"
-                      required
-                    />
+                        required
+                      />
+                      {isShowPassword ? (
+                        <div
+                          className="bottom-0 right-1 absolute z-50 cursor-pointer p-2"
+                          onClick={() => {
+                            setIsShowPassword(!isShowPassword);
+                          }}
+                        >
+                          <FaRegEye />
+                        </div>
+                      ) : (
+                        <div
+                          className="bottom-0 right-1 absolute z-50 cursor-pointer p-2"
+                          onClick={() => {
+                            setIsShowPassword(!isShowPassword);
+                          }}
+                        >
+                          <FaRegEyeSlash />
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <button
                     type="submit"
