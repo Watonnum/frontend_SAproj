@@ -4,17 +4,8 @@ import "./globals.css";
 import Sidebar from "../components/Sidebar";
 import { useEffect, useState } from "react";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa6";
-
-// const geistSans = Geist({
-//   variable: "--font-geist-sans",
-//   subsets: ["latin"],
-// });
-
-// const geistMono = Geist_Mono({
-//   variable: "--font-geist-mono",
-//   subsets: ["latin"],
-// });
 import Card, { CardHeader, CardTitle, CardContent } from "../components/Card";
+import { useUsers } from "../hooks/useUsers";
 
 export default function RootLayout({ children }) {
   const [show, setShow] = useState(false);
@@ -24,16 +15,35 @@ export default function RootLayout({ children }) {
     password: "",
   });
 
-  useEffect(() => {
-    console.log("[useEffect] - status show ==> ", show);
-  }, [show]);
+  const { users, loading: usersLoading, error: usersError } = useUsers();
+
+  console.log("🔍 [Layout] Hook state:", { users, usersLoading, usersError });
+
+  const usersData =
+    users && Array.isArray(users) && users.length > 0
+      ? users.map((user) => ({
+          id: user._id || "guest",
+          email: user.email || "",
+          password: user.passwordHash || "",
+          fName: user.fName,
+          lName: user.lName,
+          address: user.address,
+          phoneNum: user.phoneNum,
+          regisDate: user.regisDate,
+          updateDate: user.updateDate,
+          isActive: user.isActive,
+        }))
+      : [];
 
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log(formLogin);
+    console.log({ usersData });
 
     if (validateLogin()) {
-      return "now showing";
+      console.log("Login successful");
+    } else {
+      console.log("Login failed");
     }
 
     console.log("[handleSubmit] - status show ==> ", show);
@@ -48,18 +58,68 @@ export default function RootLayout({ children }) {
   };
 
   const validateLogin = () => {
-    if (
-      formLogin?.email === "ipae.wo@gmail.com" &&
-      formLogin?.password === "poopae2524"
-    ) {
-      setShow(true);
-      // delete query parameters -> clean url
-      window.history.replaceState({}, "", "/");
+    // ตรวจสอบ loading state
+    if (usersLoading) {
+      console.log("Still loading users data...");
+      return false;
     }
 
-    console.log("[validateLogin] - status show ==> ", show);
-    return;
+    // ตรวจสอบ error
+    if (usersError) {
+      console.log("Error loading users:", usersError);
+      return false;
+    }
+
+    // ตรวจสอบข้อมูลว่าง - เช็คทั้ง users และ usersData
+    if (!users || !Array.isArray(users) || users.length === 0) {
+      console.log("No users data available");
+      return false;
+    }
+
+    if (!usersData || usersData.length === 0) {
+      console.log("No usersData available");
+      return false;
+    }
+
+    // ตรวจสอบ input ว่าง
+    if (!formLogin.email.trim() || !formLogin.password.trim()) {
+      console.log("Email or password is empty");
+      return false;
+    }
+
+    // Debug ข้อมูล
+    console.log("=== Debug Login ===");
+    console.log("formLogin:", formLogin);
+    console.log("usersData:", usersData);
+    console.log("users from API:", users);
+
+    const user = usersData.find(
+      (data) =>
+        data.email === formLogin.email && data.password === formLogin.password
+    );
+
+    if (user) {
+      setShow(true);
+      console.log("✅ Login successful!");
+      console.log("db email:", user.email);
+      console.log("db password:", user.password);
+      window.history.replaceState({}, "", "/");
+      return true;
+    }
+
+    console.log("❌ Login failed - No matching user found");
+    console.log(
+      "Available emails:",
+      usersData.map((u) => u.email)
+    );
+    console.log("Input email:", formLogin.email);
+    console.log("Input password:", formLogin.password);
+    return false;
   };
+
+  useEffect(() => {
+    console.log("[useEffect] - status show ==> ", show);
+  }, [show]);
 
   return (
     <html lang="th">

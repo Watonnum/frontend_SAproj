@@ -4,23 +4,28 @@ import { usersApi, ApiError } from "../lib/api";
 
 // Custom hook สำหรับจัดการ categories
 export function useUsers() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState(null); // ✅ เปลี่ยนเป็น null
+  const [loading, setLoading] = useState(true); // ✅ เปลี่ยนเป็น true
   const [error, setError] = useState(null);
 
   // ดึงข้อมูลหมวดหมู่ทั้งหมด
   const fetchUsers = useCallback(async () => {
+    console.log("🔍 [useUsers] Starting fetchUsers...");
     setLoading(true);
     setError(null);
     try {
+      console.log("🔍 [useUsers] Calling usersApi.getAll()...");
       const data = await usersApi.getAll();
-      setCategories(data);
+      console.log("✅ [useUsers] Data received:", data);
+      setUsers(data);
     } catch (err) {
+      console.error("❌ [useUsers] Error:", err);
       setError(
         err instanceof ApiError ? err.message : "เกิดข้อผิดพลาดในการดึงข้อมูล"
       );
     } finally {
       setLoading(false);
+      console.log("🔍 [useUsers] Finished fetchUsers");
     }
   }, []);
 
@@ -70,7 +75,7 @@ export function useUsers() {
     setError(null);
     try {
       await usersApi.delete(id);
-      setCategories((prev) => prev.filter((user) => user._id !== id));
+      setUsers((prev) => prev.filter((user) => user._id !== id));
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : "เกิดข้อผิดพลาดในการลบข้อมูล"
@@ -142,7 +147,7 @@ export function useCategory(id) {
     setLoading(true);
     setError(null);
     try {
-      const updatedUsers = await categoryApi.update(id, usersData);
+      const updatedUsers = await usersApi.update(id, usersData);
       setUsers((prev) =>
         prev.map((category) => (category._id === id ? updatedUsers : category))
       );
