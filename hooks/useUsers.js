@@ -4,6 +4,7 @@ import { usersApi, ApiError } from "../lib/api";
 
 // Custom hook สำหรับจัดการ categories
 export function useUsers() {
+  console.log("🔥 [useUsers] Hook initialized");
   const [users, setUsers] = useState(null); // ✅ เปลี่ยนเป็น null
   const [loading, setLoading] = useState(true); // ✅ เปลี่ยนเป็น true
   const [error, setError] = useState(null);
@@ -88,8 +89,12 @@ export function useUsers() {
 
   // ดึงข้อมูลเมื่อ component mount
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    console.log("🔥 [useUsers] useEffect triggered, calling fetchUsers");
+    const timer = setTimeout(() => {
+      fetchUsers();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   return {
     users,

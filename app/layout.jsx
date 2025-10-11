@@ -6,6 +6,13 @@ import { useEffect, useState } from "react";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa6";
 import Card, { CardHeader, CardTitle, CardContent } from "../components/Card";
 import { useUsers } from "../hooks/useUsers";
+import { useRouter } from "next/navigation";
+import {
+  checkLoginStatus,
+  saveLoginStatus,
+  clearLoginStatus,
+} from "../lib/auth";
+import Toast from "../components/Toast";
 
 export default function RootLayout({ children }) {
   const [show, setShow] = useState(false);
@@ -14,10 +21,31 @@ export default function RootLayout({ children }) {
     email: "",
     password: "",
   });
+  const [isLoading, setIsLoading] = useState(true); // สำหรับ loading เริ่มต้น
+  const router = useRouter();
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "info",
+  });
 
-  const { users, loading: usersLoading, error: usersError } = useUsers();
+  const {
+    users,
+    loading: usersLoading,
+    error: usersError,
+    updateUsers,
+    setUsers,
+  } = useUsers();
 
   console.log("🔍 [Layout] Hook state:", { users, usersLoading, usersError });
+
+  // ฟังก์ชันแสดง Toast
+  const showToast = (message, type = "info") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: "", type: "info" });
+    }, 3000);
+  };
 
   const usersData =
     users && Array.isArray(users) && users.length > 0
@@ -35,14 +63,51 @@ export default function RootLayout({ children }) {
         }))
       : [];
 
+  const handleLogout = () => {
+    // ค้นหา active user และเปลี่ยน isActive เป็น false
+    const activeUser = users.find((user) => user.isActive === true);
+    if (activeUser) {
+      updateUsers(activeUser._id, { isActive: false });
+      console.log("User logged out:", activeUser);
+    }
+
+    // รีเซ็ต form และซ่อน main content
+    setShow(false);
+    setFormLogin({
+      email: "",
+      password: "",
+    });
+
+    // ลบสถานะ login และ redirect ไปหน้าหลัก
+    clearLoginStatus();
+    router.push("/");
+    showToast("ออกจากระบบเรียบร้อยแล้ว", "success");
+    console.log("Logout successful");
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log(formLogin);
     console.log({ usersData });
 
     if (validateLogin()) {
-      console.log("Login successful");
+      // switch account status -> active
+      const userMatched = users.find(
+        (user) =>
+          user.email === formLogin.email &&
+          user.passwordHash === formLogin.password
+      );
+      if (userMatched) {
+        updateUsers(userMatched._id, { isActive: true });
+        console.log("Matched user:", userMatched);
+
+        // บันทึกสถานะการ login
+        saveLoginStatus(formLogin.email);
+        setShow(true);
+        showToast(`ยินดีต้อนรับ ${formLogin.email}`, "success");
+      }
     } else {
+      showToast("อีเมลหรือรหัสผ่านไม่ถูกต้อง", "error");
       console.log("Login failed");
     }
 
@@ -92,6 +157,10 @@ export default function RootLayout({ children }) {
     console.log("formLogin:", formLogin);
     console.log("usersData:", usersData);
     console.log("users from API:", users);
+    // console.log(
+    //   "users id",
+    //   users.filter((data) => data.email === formLogin.email)
+    // );
 
     const user = usersData.find(
       (data) =>
@@ -103,7 +172,7 @@ export default function RootLayout({ children }) {
       console.log("✅ Login successful!");
       console.log("db email:", user.email);
       console.log("db password:", user.password);
-      window.history.replaceState({}, "", "/");
+      // ไม่ต้อง replaceState ที่นี่ เพราะเราจะให้ผู้ใช้อยู่ในหน้าปัจจุบัน
       return true;
     }
 
@@ -121,19 +190,76 @@ export default function RootLayout({ children }) {
     console.log("[useEffect] - status show ==> ", show);
   }, [show]);
 
+  // useEffect สำหรับตรวจสอบสถานะ login เมื่อ component mount
+  useEffect(() => {
+    // ตรวจสอบสถานะ login จาก localStorage
+    const isLoggedIn = checkLoginStatus();
+    setShow(isLoggedIn);
+    setIsLoading(false);
+
+    console.log("🔍 [Initial Check] Login status:", isLoggedIn);
+  }, []);
+
+  // useEffect สำหรับ Auto-logout เมื่อ localStorage เปลี่ยน
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === "isLoggedIn" && e.newValue === null) {
+        setShow(false);
+        console.log("🔄 Auto logout detected");
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  // แสดง loading screen ในขณะที่กำลังตรวจสอบสถานะ
+  if (isLoading) {
+    return (
+      <html lang="th">
+        <body>
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+              <p className="mt-2 text-gray-600">กำลังโหลด...</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    );
+  }
+
   return (
     <html lang="th">
       <body>
-        <div className="min-h-screen flex">
-          <div className={`${show ? "" : "hidden"} flex`}>
-            <Sidebar />
+        {/* Toast Notification */}
+        {toast.show && (
+          <div className="fixed top-4 right-4 z-50">
+            <Toast
+              message={toast.message}
+              type={toast.type}
+              onClose={() =>
+                setToast({ show: false, message: "", type: "info" })
+              }
+            />
           </div>
+        )}
+
+        <div className="min-h-screen flex">
+          {/* Sidebar - Fixed position */}
+          <div className={`${show ? "" : "hidden"}`}>
+            <Sidebar onLogout={handleLogout} />
+          </div>
+
+          {/* Login Screen */}
           <div
-            className={`min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ${
+            className={`min-h-screen w-full flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 ${
               show ? "hidden" : ""
             }`}
           >
-            <div className="py-32 select-none">
+            <div className="w-full max-w-md">
               {/* Login Component */}
               <Card>
                 <CardHeader className="font-bold text-3xl border-none text-center">
@@ -146,7 +272,7 @@ export default function RootLayout({ children }) {
                   onSubmit={handleSubmit}
                   className="flex flex-col border text-xl border-none gap-4 justify-center items-center pt-6"
                 >
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1 w-full">
                     <p className="text-lg text-gray-400">Username</p>
                     <input
                       type="email"
@@ -158,7 +284,7 @@ export default function RootLayout({ children }) {
                       required
                     />
                   </div>
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1 w-full">
                     <p className="text-lg text-gray-400">Password</p>
                     <div className="relative">
                       <input
@@ -202,8 +328,14 @@ export default function RootLayout({ children }) {
               {/* Login Component */}
             </div>
           </div>
-          <div className={`flex-1 min-w-0 select-none ${show ? "" : "hidden"}`}>
-            {children}
+
+          {/* Main Content Area - with left margin for sidebar */}
+          <div
+            className={`flex-1 ml-64 min-w-0 select-none ${
+              show ? "" : "hidden"
+            }`}
+          >
+            <div className="p-4">{children}</div>
           </div>
         </div>
       </body>
