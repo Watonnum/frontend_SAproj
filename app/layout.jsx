@@ -319,7 +319,7 @@ export default function RootLayout({ children }) {
                   </div>
                   <button
                     type="submit"
-                    className="hover:cursor-pointer bg-black text-white hover:opacity-40 rounded-xl w-full px-4 py-2 duration-200 mt-4"
+                    className="hover:cursor-pointer bg-black text-white hover:opacity-40 rounded-xl w-full px-4 py-2 duration-200 mt-4 select-none"
                   >
                     Login
                   </button>

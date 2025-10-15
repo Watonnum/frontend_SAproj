@@ -7,11 +7,13 @@ import LoadingSpinner from "../../components/LoadingSpinner";
 import Toast from "../../components/Toast";
 import { useProducts } from "../../hooks/useProducts";
 import { useCart } from "../../hooks/useCart";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useCategories } from "@/hooks/useCategories";
 
 export default function ShopPage() {
   const { products, loading, error } = useProducts();
+  const { categories: categoriesData } = useCategories();
   const { addItem } = useCart();
   const [toast, setToast] = useState({
     show: false,
@@ -27,10 +29,21 @@ export default function ShopPage() {
     );
   };
 
-  const visibleProducts = products.filter(
+  const data = (products || []).map((item) => ({
+    id: item._id,
+    name: item.name,
+    categoryId: item.categoryId,
+    categoryName:
+      categoriesData?.find((cat) => cat._id === item.categoryId)?.name ||
+      "ไม่ระบุ",
+    price: item.price || 0,
+    stock: item.inStock || 0,
+    status: item.isAvailable,
+  }));
+
+  const visibleProducts = data.filter(
     (p) =>
-      p.isAvailable === true &&
-      (typeof p.stock === "number" ? p.stock > 0 : true)
+      p.status === true && (typeof p.stock === "number" ? p.stock > 0 : true)
   );
 
   const handleAdd = async (id) => {
@@ -44,7 +57,6 @@ export default function ShopPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {toast.show && (
           <Toast
@@ -76,31 +88,32 @@ export default function ShopPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {visibleProducts.map((p) => (
-            <Card key={p._id}>
+            <Card key={p.id}>
               <div className="p-4 flex flex-col h-full">
                 <div className="flex-1">
                   <Image
                     alt="Product image"
-                    width={300}
-                    height={300}
-                    className="bg-amber-50"
-                    src={""}
+                    priority={true} // from annotation nextjs runtime
+                    width={150}
+                    height={150}
+                    className="bg-amber-50 mx-auto mb-8"
+                    src={"/products.avif"}
                   />
                   <h3 className="text-lg font-semibold">{p.name}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{p.category}</p>
+                  <p className="text-sm text-gray-500 mt-1">{p.categoryName}</p>
                   <p className="text-gray-900 font-bold mt-2">
                     ฿{Number(p.price || 0).toLocaleString()}
                   </p>
-                  {typeof p.inStock === "number" && (
+                  {typeof p.stock === "number" && (
                     <p className="text-xs text-gray-500 mt-1">
-                      สต็อก: {p.inStock}
+                      สต็อก: {p.stock}
                     </p>
                   )}
                 </div>
                 <div className="mt-4">
                   <Button
                     onClick={() => {
-                      handleAdd(p._id);
+                      handleAdd(p.id);
                     }}
                     className="w-full cursor-pointer"
                   >
