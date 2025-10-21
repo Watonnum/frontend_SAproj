@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Header from "../../components/Header";
 import Card, {
@@ -44,16 +44,16 @@ export default function DataPage() {
     id: product._id,
     name: product.name || "",
     categoryId: product.categoryId,
-    categoryName:
-      categoriesData.find((cat) => cat._id === product.categoryId)?.name ||
-      "ไม่ระบุ",
+    // categoryName:
+    //   categoriesData.find((cat) => cat._id === product.categoryId)?.name ||
+    //   "ไม่ระบุ",
     price: product.price || 0,
     stock: product.inStock || 0,
     status: product.isAvailable,
   }));
 
   const category = categoriesData.map((cat) => ({
-    value: cat._id,
+    value: cat.name,
     label: cat.name,
   }));
 
@@ -78,7 +78,7 @@ export default function DataPage() {
       .includes(searchTerm.toLowerCase());
 
     const matchesCategory =
-      !selectedCategory || item.categoryId === selectedCategory;
+      !selectedCategory || item.categoryId.name === selectedCategory;
 
     let matchesStatus = true;
     if (selectedStatus !== "") {
@@ -136,6 +136,11 @@ export default function DataPage() {
     setSortOrder("asc");
     setCurrentPage(1);
   };
+
+  useEffect(() => {
+    console.log("Categories data : ", categoriesData);
+    console.log("data : ", data);
+  }, [categoriesData, data]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -360,7 +365,7 @@ export default function DataPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap ">
                         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {item.categoryName}
+                          {item.categoryId.name}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
