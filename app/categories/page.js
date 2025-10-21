@@ -55,6 +55,9 @@ export default function ShopPage() {
     }
   };
 
+  useEffect(() => {
+    console.log(data);
+  }, [data]);
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -100,7 +103,9 @@ export default function ShopPage() {
                     src={"/products.avif"}
                   />
                   <h3 className="text-lg font-semibold">{p.name}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{p.categoryName}</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {p.categoryId.name}
+                  </p>
                   <p className="text-gray-900 font-bold mt-2">
                     ฿{Number(p.price || 0).toLocaleString()}
                   </p>
