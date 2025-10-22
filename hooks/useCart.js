@@ -30,7 +30,7 @@ export function useCart(userId = "guest") {
           "userId : " + userId + "\n"
         );
         const data = await cartApi.addToCart(productId, quantity, userId);
-        console.log(data);
+        console.log("data : " + data);
         setCart(data);
       } catch (error) {
         setError(error.message || "เพิ่มสินค้าล้มเหลว");
