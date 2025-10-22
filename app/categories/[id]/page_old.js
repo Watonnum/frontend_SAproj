@@ -11,6 +11,7 @@ import { useProducts } from "../../../hooks/useProducts";
 import { useCart } from "../../../hooks/useCart";
 import { useCategories } from "../../../hooks/useCategories";
 import Image from "next/image";
+import { toast } from "sonner";
 
 export default function CategoryPage() {
   const params = useParams();
@@ -20,6 +21,7 @@ export default function CategoryPage() {
     products,
     loading: productsLoading,
     error: productsError,
+    updateProductStock,
   } = useProducts();
   const {
     categories,
@@ -77,18 +79,29 @@ export default function CategoryPage() {
   }, [products, currentCategory, categoryId]);
 
   const handleAddToCart = async (product) => {
+    console.log(
+      "🛒 OLD PAGE - Adding to cart:",
+      product.name,
+      "current stock:",
+      product.inStock
+    );
+
     try {
-      await addItem(product._id, 1);
-      setToast({
-        show: true,
-        message: `เพิ่ม ${product.name} ลงในตะกร้าแล้ว`,
-        type: "success",
+      // เพิ่มสินค้าเข้าตะกร้าโดยส่งชื่อสินค้าด้วย
+      await addItem(product._id, 1, product.name);
+
+      // อัพเดทจำนวนสินค้าทันที
+      updateProductStock(product._id, product.inStock - 1);
+
+      // แสดง toast notification
+      toast.success(`เพิ่ม ${product.name} ลงในตะกร้าแล้ว`, {
+        description: `จำนวน 1 ชิ้น`,
+        duration: 3000,
       });
     } catch (error) {
-      setToast({
-        show: true,
-        message: "เกิดข้อผิดพลาดในการเพิ่มสินค้า",
-        type: "error",
+      console.error("Add to cart error:", error);
+      toast.error("เกิดข้อผิดพลาดในการเพิ่มสินค้า", {
+        description: "กรุณาลองอีกครั้ง",
       });
     }
   };
@@ -293,14 +306,6 @@ export default function CategoryPage() {
           </div>
         )}
       </div>
-
-      {toast.show && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast({ ...toast, show: false })}
-        />
-      )}
     </div>
   );
 }

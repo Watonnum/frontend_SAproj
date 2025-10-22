@@ -1,14 +1,20 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  createContext,
+  useContext,
+} from "react";
 import { categoryApi, ApiError } from "../lib/api";
 
-// Custom hook สำหรับจัดการ categories
-export function useCategories() {
+const CategoriesContext = createContext(null);
+
+export function CategoriesProvider({ children }) {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // ดึงข้อมูลหมวดหมู่ทั้งหมด
   const fetchCategories = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -24,7 +30,10 @@ export function useCategories() {
     }
   }, []);
 
-  // สร้างหมวดหมู่ใหม่
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
   const createCategory = useCallback(async (categoryData) => {
     setLoading(true);
     setError(null);
@@ -42,7 +51,6 @@ export function useCategories() {
     }
   }, []);
 
-  // อัพเดทหมวดหมู่
   const updateCategory = useCallback(async (id, categoryData) => {
     setLoading(true);
     setError(null);
@@ -66,7 +74,6 @@ export function useCategories() {
     }
   }, []);
 
-  // ลบหมวดหมู่
   const deleteCategory = useCallback(async (id) => {
     setLoading(true);
     setError(null);
@@ -83,12 +90,7 @@ export function useCategories() {
     }
   }, []);
 
-  // ดึงข้อมูลเมื่อ component mount
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
-
-  return {
+  const value = {
     categories,
     loading,
     error,
@@ -97,22 +99,36 @@ export function useCategories() {
     updateCategory,
     deleteCategory,
   };
+
+  return (
+    <CategoriesContext.Provider value={value}>
+      {children}
+    </CategoriesContext.Provider>
+  );
+}
+
+export function useCategories() {
+  const context = useContext(CategoriesContext);
+  if (!context) {
+    throw new Error("useCategories must be used within a CategoriesProvider");
+  }
+  return context;
 }
 
 // Custom hook สำหรับดึงข้อมูลหมวดหมู่เดี่ยว
 export function useCategory(id) {
-  const [categories, setCategories] = useState(null);
+  const [category, setCategory] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchCategories = useCallback(async () => {
+  const fetchCategory = useCallback(async () => {
     if (!id) return;
 
     setLoading(true);
     setError(null);
     try {
       const data = await categoryApi.getById(id);
-      setCategories(data);
+      setCategory(data);
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : "เกิดข้อผิดพลาดในการดึงข้อมูล"
@@ -122,39 +138,14 @@ export function useCategory(id) {
     }
   }, [id]);
 
-  // อัพเดทหมวดหมู่
-  const updateCategory = useCallback(async (id, categoryData) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const updatedCategory = await categoryApi.update(id, categoryData);
-      setCategories((prev) =>
-        prev.map((category) =>
-          category._id === id ? updatedCategory : category
-        )
-      );
-      return updatedCategory;
-    } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "เกิดข้อผิดพลาดในการอัพเดทข้อมูล"
-      );
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    fetchCategory();
+  }, [fetchCategory]);
 
   return {
-    categories,
-    updateCategory,
+    category,
     loading,
     error,
-    refetch: fetchCategories,
+    refetch: fetchCategory,
   };
 }

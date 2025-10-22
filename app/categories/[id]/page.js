@@ -6,7 +6,6 @@ import Header from "../../../components/Header";
 import Card from "../../../components/Card";
 import Button from "../../../components/Button";
 import LoadingSpinner from "../../../components/LoadingSpinner";
-import Toast from "../../../components/Toast";
 import { useProducts } from "../../../hooks/useProducts";
 import { useCart } from "../../../hooks/useCart";
 import { useCategories } from "../../../hooks/useCategories";
@@ -21,6 +20,7 @@ export default function CategoryPage() {
     products,
     loading: productsLoading,
     error: productsError,
+    updateLocalProductStock,
   } = useProducts();
   const {
     categories,
@@ -31,11 +31,7 @@ export default function CategoryPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
-  const [toast, setToast] = useState({
-    show: false,
-    message: "",
-    type: "info",
-  });
+  const [addingProductId, setAddingProductId] = useState(null);
 
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [currentCategory, setCurrentCategory] = useState(null);
@@ -49,6 +45,8 @@ export default function CategoryPage() {
 
   useEffect(() => {
     if (products.length > 0 && currentCategory) {
+      console.log("🔄 Filtering products, total products:", products.length);
+
       // กรองสินค้าตามหมวดหมู่
       const filtered = products
         .filter((product) => {
@@ -86,26 +84,28 @@ export default function CategoryPage() {
           }
         });
 
+      console.log(
+        "📦 Filtered products:",
+        filtered.map((p) => ({ name: p.name, stock: p.inStock }))
+      );
       setFilteredProducts(filtered);
     }
   }, [products, currentCategory, categoryId, searchTerm, sortBy]);
 
   const handleAddToCart = async (product) => {
+    if (product.inStock <= 0 || addingProductId === product._id) return;
+    setAddingProductId(product._id);
     try {
-      await addItem(product._id, 1);
-      setToast({
-        show: true,
-        message: `เพิ่ม ${product.name} ลงในตะกร้าแล้ว`,
-        type: "success",
-      });
-      setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
+      // 1. เพิ่มสินค้าลงตะกร้า (useCart hook จะแสดง toast เอง)
+      await addItem(product._id, 1, product.name);
+
+      // 2. อัปเดตสต็อกใน UI ทันที
+      updateLocalProductStock(product._id, product.inStock - 1);
     } catch (error) {
-      setToast({
-        show: true,
-        message: "เกิดข้อผิดพลาดในการเพิ่มสินค้า",
-        type: "error",
-      });
-      setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
+      console.error("❌ Add to cart error:", error);
+      // การจัดการ error จะทำใน useCart hook ซึ่งจะแสดง toast error ให้
+    } finally {
+      setAddingProductId(null);
     }
   };
 
@@ -202,14 +202,6 @@ export default function CategoryPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {toast.show && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast({ ...toast, show: false })}
-          />
-        )}
-
         {/* Filters Section */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 mb-8 overflow-hidden">
           <div className="p-6">
@@ -463,17 +455,47 @@ export default function CategoryPage() {
 
                     {/* Add to Cart Button */}
                     <Button
-                      onClick={() => handleAddToCart(product)}
+                      onClick={() => {
+                        handleAddToCart(product);
+                      }}
                       disabled={
-                        !product.isAvailable || (product.inStock || 0) === 0
+                        !product.isAvailable ||
+                        (product.inStock || 0) === 0 ||
+                        addingProductId === product._id
                       }
                       className={`w-full font-semibold py-3 transition-all duration-200 ${
                         !product.isAvailable || (product.inStock || 0) === 0
                           ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : addingProductId === product._id
+                          ? "bg-blue-400 cursor-wait"
                           : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                       }`}
                     >
-                      {!product.isAvailable ? (
+                      {addingProductId === product._id ? (
+                        <span className="flex items-center justify-center">
+                          <svg
+                            className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          กำลังเพิ่ม...
+                        </span>
+                      ) : !product.isAvailable ? (
                         <span className="flex items-center justify-center">
                           <svg
                             className="w-4 h-4 mr-2"

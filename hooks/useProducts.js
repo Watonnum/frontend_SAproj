@@ -1,14 +1,20 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  createContext,
+  useContext,
+} from "react";
 import { productApi, ApiError } from "../lib/api";
 
-// Custom hook สำหรับจัดการ products
-export function useProducts() {
+const ProductsContext = createContext(null);
+
+export function ProductsProvider({ children }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // ดึงข้อมูลสินค้าทั้งหมด
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -23,6 +29,11 @@ export function useProducts() {
       setLoading(false);
     }
   }, []);
+
+  // ดึงข้อมูลเมื่อ component mount
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   // สร้างสินค้าใหม่
   const createProduct = useCallback(async (productData) => {
@@ -81,12 +92,19 @@ export function useProducts() {
     }
   }, []);
 
-  // ดึงข้อมูลเมื่อ component mount
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+  // อัพเดทจำนวนสินค้าใน local state (สำหรับ real-time update)
+  const updateLocalProductStock = useCallback((productId, newStock) => {
+    setProducts((prevProducts) => {
+      const updated = prevProducts.map((product) =>
+        product._id === productId
+          ? { ...product, inStock: Math.max(0, newStock) }
+          : product
+      );
+      return updated;
+    });
+  }, []);
 
-  return {
+  const value = {
     products,
     loading,
     error,
@@ -94,7 +112,23 @@ export function useProducts() {
     createProduct,
     updateProduct,
     deleteProduct,
+    updateLocalProductStock,
+    setProducts, // Expose setProducts for optimistic updates if needed
   };
+
+  return (
+    <ProductsContext.Provider value={value}>
+      {children}
+    </ProductsContext.Provider>
+  );
+}
+
+export function useProducts() {
+  const context = useContext(ProductsContext);
+  if (!context) {
+    throw new Error("useProducts must be used within a ProductsProvider");
+  }
+  return context;
 }
 
 // Custom hook สำหรับดึงข้อมูลสินค้าเดี่ยว

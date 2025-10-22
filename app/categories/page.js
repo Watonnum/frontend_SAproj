@@ -4,33 +4,20 @@ import Header from "../../components/Header";
 import Card from "../../components/Card";
 import Button from "../../components/Button";
 import LoadingSpinner from "../../components/LoadingSpinner";
-import Toast from "../../components/Toast";
 import { useProducts } from "../../hooks/useProducts";
 import { useCart } from "../../hooks/useCart";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useCategories } from "@/hooks/useCategories";
 
 export default function ShopPage() {
-  const { products, loading, error } = useProducts();
+  const { products, loading, error, updateLocalProductStock } = useProducts();
   const { categories: categoriesData } = useCategories();
   const { addItem } = useCart();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
-  const [toast, setToast] = useState({
-    show: false,
-    message: "",
-    type: "info",
-  });
-
-  const showToast = (message, type = "info") => {
-    setToast({ show: true, message, type });
-    setTimeout(
-      () => setToast({ show: false, message: "", type: "info" }),
-      3000
-    );
-  };
+  const [addingProductId, setAddingProductId] = useState(null);
 
   const data = (products || []).map((item) => ({
     id: item._id,
@@ -70,11 +57,18 @@ export default function ShopPage() {
     });
 
   const handleAdd = async (product) => {
+    if (product.stock <= 0 || addingProductId === product.id) return;
+    setAddingProductId(product.id);
     try {
-      await addItem(product.id, 1);
-      showToast(`เพิ่ม ${product.name} ลงตะกร้าแล้ว`, "success");
+      // addItem จาก useCart จะแสดง toast เอง
+      await addItem(product.id, 1, product.name);
+      // อัปเดตสต็อกใน UI
+      updateLocalProductStock(product.id, product.stock - 1);
     } catch (e) {
-      showToast(e?.message || "เพิ่มลงตะกร้าล้มเหลว", "error");
+      console.error("Add to cart failed:", e);
+      // ไม่ต้องแสดง toast เอง เพราะ useCart จัดการให้แล้ว
+    } finally {
+      setAddingProductId(null);
     }
   };
 
@@ -111,14 +105,6 @@ export default function ShopPage() {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {toast.show && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast({ show: false, message: "", type: "info" })}
-          />
-        )}
-
         {/* Filters Section */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 mb-8 overflow-hidden">
           <div className="p-6">
@@ -381,14 +367,42 @@ export default function ShopPage() {
 
                   <Button
                     onClick={() => handleAdd(product)}
-                    disabled={product.stock === 0}
+                    disabled={
+                      product.stock === 0 || addingProductId === product.id
+                    }
                     className={`w-full font-semibold py-3 transition-all duration-200 ${
                       product.stock === 0
                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : addingProductId === product.id
+                        ? "bg-blue-400 cursor-wait"
                         : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                     }`}
                   >
-                    {product.stock === 0 ? (
+                    {addingProductId === product.id ? (
+                      <span className="flex items-center justify-center">
+                        <svg
+                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        กำลังเพิ่ม...
+                      </span>
+                    ) : product.stock === 0 ? (
                       <span className="flex items-center justify-center">
                         <svg
                           className="w-4 h-4 mr-2"
