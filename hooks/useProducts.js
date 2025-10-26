@@ -16,7 +16,7 @@ export function ProductsProvider({ children }) {
   const [error, setError] = useState(null);
 
   const fetchProducts = useCallback(async () => {
-    setLoading(true);
+    setLoading(products.length === 0);
     setError(null);
     try {
       const data = await productApi.getAll();

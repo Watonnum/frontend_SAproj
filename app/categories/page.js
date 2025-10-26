@@ -11,8 +11,14 @@ import { useCategories } from "@/hooks/useCategories";
 import { useRouter } from "next/navigation";
 
 export default function ShopPage() {
-  const { products, loading, error, updateLocalProductStock, updateProduct } =
-    useProducts();
+  const {
+    fetchProducts,
+    products,
+    loading,
+    error,
+    updateLocalProductStock,
+    updateProduct,
+  } = useProducts();
   const { categories: categoriesData } = useCategories();
   const { addItem } = useCart();
   const router = useRouter();
@@ -65,7 +71,7 @@ export default function ShopPage() {
       // addItem จาก useCart จะแสดง toast เอง
       await addItem(product.id, 1, product.name);
       await updateProduct(product.id, { inStock: product.stock - 1 });
-      router.refresh();
+      fetchProducts();
       // อัปเดตสต็อกใน UI
       // updateLocalProductStock(product.id, product.stock - 1);
     } catch (e) {
@@ -215,7 +221,7 @@ export default function ShopPage() {
           </div>
         )}
 
-        {loading && (
+        {loading && products.length === 0 && (
           <div className="py-20 flex flex-col items-center justify-center">
             <LoadingSpinner />
             <p className="mt-4 text-gray-600">กำลังโหลดสินค้า...</p>
