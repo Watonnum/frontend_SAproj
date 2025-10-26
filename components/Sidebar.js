@@ -88,6 +88,7 @@ const NavItem = ({
 };
 
 export default function Sidebar({ onLogout }) {
+  const pathname = usePathname();
   const [isCategoryExpanded, setIsCategoryExpanded] = useState(false);
   const { categories, fetchCategories } = useCategories();
 
@@ -134,7 +135,11 @@ export default function Sidebar({ onLogout }) {
             {/* Categories Dropdown Items */}
             <Link
               href="/categories"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors brand-text-muted hover:text-[var(--color-primary)] hover:bg-black/5"
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                pathname === "/categories"
+                  ? "bg-[var(--color-primary)] text-[var(--color-on-primary)]"
+                  : "brand-text-muted hover:text-[var(--color-primary)] hover:bg-black/5"
+              }`}
             >
               <span>All</span>
             </Link>
@@ -142,7 +147,11 @@ export default function Sidebar({ onLogout }) {
               <Link
                 key={category._id}
                 href={`/categories/${category._id}`}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors brand-text-muted hover:text-[var(--color-primary)] hover:bg-black/5"
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  pathname === `/categories/${category._id}`
+                    ? "bg-[var(--color-primary)] text-[var(--color-on-primary)]"
+                    : "brand-text-muted hover:text-[var(--color-primary)] hover:bg-black/5"
+                }`}
               >
                 <span>{category.name}</span>
               </Link>

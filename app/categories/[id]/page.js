@@ -9,6 +9,7 @@ import LoadingSpinner from "../../../components/LoadingSpinner";
 import { useProducts } from "../../../hooks/useProducts";
 import { useCart } from "../../../hooks/useCart";
 import { useCategories } from "../../../hooks/useCategories";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -21,6 +22,7 @@ export default function CategoryPage() {
     loading: productsLoading,
     error: productsError,
     updateLocalProductStock,
+    updateProduct,
   } = useProducts();
   const {
     categories,
@@ -32,7 +34,7 @@ export default function CategoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
   const [addingProductId, setAddingProductId] = useState(null);
-
+  const router = useRouter();
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [currentCategory, setCurrentCategory] = useState(null);
 
@@ -98,9 +100,10 @@ export default function CategoryPage() {
     try {
       // 1. เพิ่มสินค้าลงตะกร้า (useCart hook จะแสดง toast เอง)
       await addItem(product._id, 1, product.name);
-
+      await updateProduct(product._id, { inStock: product.inStock - 1 });
+      router.refresh();
       // 2. อัปเดตสต็อกใน UI ทันที
-      updateLocalProductStock(product._id, product.inStock - 1);
+      // updateLocalProductStock(product._id, product.inStock - 1);
     } catch (error) {
       console.error("❌ Add to cart error:", error);
       // การจัดการ error จะทำใน useCart hook ซึ่งจะแสดง toast error ให้
@@ -158,49 +161,6 @@ export default function CategoryPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            {/* Breadcrumb */}
-            <div className="mb-4">
-              <Link
-                href="/categories"
-                className="text-blue-200 hover:text-white transition-colors duration-200"
-              >
-                ร้านค้าออนไลน์
-              </Link>
-              <span className="mx-2 text-blue-300">›</span>
-              <span className="text-white font-medium">
-                {currentCategory.name}
-              </span>
-            </div>
-
-            <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-              {currentCategory.name}
-            </h1>
-
-            {currentCategory.description && (
-              <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
-                {currentCategory.description}
-              </p>
-            )}
-
-            <div className="flex flex-wrap justify-center gap-4 text-sm">
-              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                📦 {filteredProducts.length} สินค้า
-              </div>
-              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                ⚡ ส่งเร็วภายใน 24 ชั่วโมง
-              </div>
-              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                🛡️ รับประกันความพอใจ 100%
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters Section */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 mb-8 overflow-hidden">
@@ -374,15 +334,15 @@ export default function CategoryPage() {
                     <div className="absolute top-3 right-3">
                       {(product.inStock || 0) > 10 ? (
                         <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                          พร้อมส่ง
+                          ✅ พร้อมส่ง
                         </span>
                       ) : (product.inStock || 0) > 0 ? (
                         <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                          เหลือน้อย
+                          ⚠️ เหลือน้อย
                         </span>
                       ) : (
                         <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                          หมด
+                          ❌ หมด
                         </span>
                       )}
                     </div>
@@ -419,7 +379,7 @@ export default function CategoryPage() {
                         </div>
                       </div>
 
-                      <div className="text-right">
+                      {/* <div className="text-right">
                         <div
                           className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             (product.inStock || 0) > 10
@@ -435,7 +395,7 @@ export default function CategoryPage() {
                             ? "⚠️ เหลือน้อย"
                             : "❌ หมด"}
                         </div>
-                      </div>
+                      </div> */}
                     </div>
 
                     {/* Product Status */}

@@ -1,6 +1,5 @@
 "use client";
 
-import Header from "../../components/Header";
 import Card from "../../components/Card";
 import Button from "../../components/Button";
 import LoadingSpinner from "../../components/LoadingSpinner";
@@ -9,11 +8,14 @@ import { useCart } from "../../hooks/useCart";
 import { useState } from "react";
 import Image from "next/image";
 import { useCategories } from "@/hooks/useCategories";
+import { useRouter } from "next/navigation";
 
 export default function ShopPage() {
-  const { products, loading, error, updateLocalProductStock } = useProducts();
+  const { products, loading, error, updateLocalProductStock, updateProduct } =
+    useProducts();
   const { categories: categoriesData } = useCategories();
   const { addItem } = useCart();
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
@@ -62,8 +64,10 @@ export default function ShopPage() {
     try {
       // addItem จาก useCart จะแสดง toast เอง
       await addItem(product.id, 1, product.name);
+      await updateProduct(product.id, { inStock: product.stock - 1 });
+      router.refresh();
       // อัปเดตสต็อกใน UI
-      updateLocalProductStock(product.id, product.stock - 1);
+      // updateLocalProductStock(product.id, product.stock - 1);
     } catch (e) {
       console.error("Add to cart failed:", e);
       // ไม่ต้องแสดง toast เอง เพราะ useCart จัดการให้แล้ว
@@ -79,31 +83,6 @@ export default function ShopPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-              ร้านค้าออนไลน์
-            </h1>
-            <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
-              เลือกซื้อสินค้าคุณภาพดี ราคาย่อมเยา พร้อมส่งถึงบ้าน
-            </p>
-            <div className="flex flex-wrap justify-center gap-4 text-sm">
-              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                📦 ส่งฟรีเมื่อซื้อครบ 500 บาท
-              </div>
-              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                ⚡ ส่งเร็วภายใน 24 ชั่วโมง
-              </div>
-              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                🛡️ รับประกันความพอใจ 100%
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters Section */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 mb-8 overflow-hidden">
@@ -303,15 +282,15 @@ export default function ShopPage() {
                   <div className="absolute top-3 right-3">
                     {product.stock > 10 ? (
                       <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                        พร้อมส่ง
+                        ✅ พร้อมส่ง
                       </span>
                     ) : product.stock > 0 ? (
-                      <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                        เหลือน้อย
+                      <span className="bg-yellow-700 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                        ⚠️ เหลือน้อย
                       </span>
                     ) : (
                       <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                        หมด
+                        ❌ หมด
                       </span>
                     )}
                   </div>
@@ -346,7 +325,7 @@ export default function ShopPage() {
                       </div>
                     </div>
 
-                    <div className="text-right">
+                    {/* <div className="border right-0">
                       <div
                         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                           product.stock > 10
@@ -362,7 +341,7 @@ export default function ShopPage() {
                           ? "⚠️ เหลือน้อย"
                           : "❌ หมด"}
                       </div>
-                    </div>
+                    </div> */}
                   </div>
 
                   <Button

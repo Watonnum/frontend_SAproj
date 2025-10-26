@@ -264,7 +264,20 @@ export default function UsersPage() {
                 onClick={handleCreate}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                ➕ เพิ่มผู้ใช้ใหม่
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                เพิ่มผู้ใช้ใหม่
               </Button>
             </div>
           </CardHeader>
