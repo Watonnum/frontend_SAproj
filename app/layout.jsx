@@ -11,10 +11,12 @@ import { CategoriesProvider } from "../hooks/useCategories";
 import { CartProvider } from "../hooks/useCart";
 import Login from "../components/Login";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { useState } from "react";
 
 function AppContent({ children }) {
   const { isLoggedIn, loading, logout } = useAuth();
   const pathname = usePathname();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // เช็คว่าเป็นหน้า POS หรือ Payment ที่ต้องใช้ full screen
   const isFullScreenPage = pathname === "/pos" || pathname === "/payment";
@@ -24,17 +26,23 @@ function AppContent({ children }) {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="h-screen select-none">
       {isLoggedIn ? (
         isFullScreenPage ? (
           // Full screen layout สำหรับ POS และ Payment
-          <main className="min-h-screen">{children}</main>
+          <main className="h-screen">{children}</main>
         ) : (
           // Layout แบบเดิมพร้อม sidebar
-          <div className="flex">
-            <Sidebar onLogout={logout} />
-            <main className="flex-1 ml-64 min-w-0">
-              <div className="p-4">{children}</div>
+          <div className="h-screen flex bg-gray-50">
+            <Sidebar
+              onLogout={logout}
+              onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className={`transition-all duration-300 ${
+                sidebarCollapsed ? "w-16" : "w-64"
+              } flex-shrink-0`}
+            />
+            <main className="flex-1 min-w-0 overflow-hidden">
+              <div className="h-full overflow-y-auto">{children}</div>
             </main>
           </div>
         )

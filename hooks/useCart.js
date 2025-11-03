@@ -17,7 +17,7 @@ export { CartContext };
 
 export function CartProvider({ children }) {
   const { user } = useAuth();
-  const { products, updateLocalProductStock } = useProducts();
+  const { products, updateLocalProductStock, fetchProducts } = useProducts();
 
   const [cart, setCart] = useState({
     items: [],
@@ -146,13 +146,9 @@ export function CartProvider({ children }) {
           );
           setCart(data);
 
-          // อัพเดท stock ของสินค้า (local update เท่านั้น)
-          const currentProducts = products;
-          const product = currentProducts.find((p) => p._id === productId);
-          if (product) {
-            const newStock = product.inStock - quantityChange; // ลด stock ตามจำนวนที่เพิ่ม
-            updateLocalProductStock(productId, newStock);
-          }
+          // Backend จัดการ stock แล้ว ไม่ต้อง update local
+          // Refresh products เพื่อแสดง stock ที่ถูกต้อง
+          await fetchProducts();
         } catch (error) {
           setError(error.message || "Failed to update cart");
           toast.error("Failed to update item quantity", {
@@ -191,13 +187,9 @@ export function CartProvider({ children }) {
         const data = await cartApi.removeFromCart(realProductId, userId);
         setCart(data);
 
-        // คืน stock กลับ (local update เท่านั้น)
-        const currentProducts = products;
-        const product = currentProducts.find((p) => p._id === realProductId);
-        if (product) {
-          const newStock = product.inStock + itemToRemove.quantity;
-          updateLocalProductStock(realProductId, newStock);
-        }
+        // Backend จัดการ stock แล้ว ไม่ต้อง update local
+        // Refresh products เพื่อแสดง stock ที่ถูกต้อง
+        await fetchProducts();
 
         toast.success("Item removed from cart");
       } catch (error) {
@@ -209,8 +201,7 @@ export function CartProvider({ children }) {
         }, 100);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [userId, cart.items, updateLocalProductStock, actionLoading, loading]
+    [userId, cart.items, actionLoading, loading, fetchProducts]
   );
 
   const clearCart = useCallback(async () => {
@@ -226,29 +217,12 @@ export function CartProvider({ children }) {
     setActionLoading((prev) => ({ ...prev, clearCart: true }));
 
     try {
-      // เก็บข้อมูล stock ที่ต้องคืน
-      const stockToReturn = cart.items.map((item) => {
-        const productId = item.productId?._id || item.productId;
-        const currentProducts = products;
-        const product = currentProducts.find((p) => p._id === productId);
-        return {
-          productId,
-          quantity: item.quantity,
-          currentStock: product?.inStock || 0,
-        };
-      });
-
-      // ล้างตระกร้า
+      // ล้างตระกร้า (backend จะคืน stock ให้เอง)
       await cartApi.clearCart(userId);
       setCart({ items: [], totalAmount: 0, totalItems: 0 });
 
-      // คืน stock กลับ (local update เท่านั้น)
-      const updatePromises = stockToReturn.map(
-        ({ productId, quantity, currentStock }) => {
-          const newStock = currentStock + quantity;
-          updateLocalProductStock(productId, newStock);
-        }
-      );
+      // Refresh products เพื่อแสดง stock ที่ถูกต้องจาก backend
+      await fetchProducts();
 
       toast.success("Cart cleared and stock restored");
     } catch (error) {
@@ -259,8 +233,7 @@ export function CartProvider({ children }) {
         setActionLoading((prev) => ({ ...prev, clearCart: false }));
       }, 100);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, cart.items, updateLocalProductStock, loading]);
+  }, [userId, cart.items, loading, fetchProducts]);
 
   const value = {
     cart,

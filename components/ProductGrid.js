@@ -37,7 +37,7 @@ function ProductGrid({ onProductEdit, showToast }) {
   // States for filtering and sorting
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [sortBy, setSortBy] = useState("name");
+  const [sortBy, setSortBy] = useState("price");
   const [sortOrder, setSortOrder] = useState("asc");
   const [viewMode, setViewMode] = useState("grid");
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -123,10 +123,23 @@ function ProductGrid({ onProductEdit, showToast }) {
     setEditModal({ isOpen: false, product: null });
   }, []);
 
+  // ProductCard component
   const ProductCard = memo(({ product }) => (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-lg transition-all duration-300 hover:-translate-y-2">
+    <div
+      className="bg-white rounded-xl border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02] group cursor-pointer"
+      onClick={() => {
+        // เพิ่มสินค้าลงตระกร้าเมื่อคลิกที่ card
+        if (
+          product.isAvailable &&
+          (product.inStock || 0) > 0 &&
+          !actionLoading[`add-${product._id}`]
+        ) {
+          handleAddToCart(product);
+        }
+      }}
+    >
       {/* Product Image */}
-      <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center relative overflow-hidden">
+      <div className="relative h-48 bg-gray-50 flex items-center justify-center overflow-hidden">
         {product.imageUrl ? (
           <Image
             src={product.imageUrl}
@@ -157,13 +170,29 @@ function ProductGrid({ onProductEdit, showToast }) {
         {/* Edit Button */}
         <button
           onClick={(e) => {
-            e.stopPropagation();
+            e.stopPropagation(); // ป้องกันไม่ให้ trigger card click
             handleEditProduct(product);
           }}
-          className="absolute top-3 left-3 w-8 h-8 bg-white bg-opacity-90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-opacity-100 hover:scale-110"
+          className="absolute top-3 left-3 w-8 h-8 bg-white bg-opacity-90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-opacity-100 hover:scale-110 z-10"
         >
           <Edit className="w-4 h-4 text-gray-600" />
         </button>
+
+        {/* Loading Overlay */}
+        {actionLoading[`add-${product._id}`] && (
+          <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+
+        {/* Unavailable Overlay */}
+        {(!product.isAvailable || (product.inStock || 0) <= 0) && (
+          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+            <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+              {!product.isAvailable ? "ไม่พร้อมขาย" : "สินค้าหมด"}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Product Info */}
@@ -183,32 +212,6 @@ function ProductGrid({ onProductEdit, showToast }) {
               ${(product.price || 0).toFixed(2)}
             </span>
           </div>
-
-          <button
-            onClick={() => handleAddToCart(product)}
-            disabled={
-              !product.isAvailable ||
-              (product.inStock || 0) <= 0 ||
-              actionLoading[`add-${product._id}`]
-            }
-            className={`px-4 py-2 rounded-xl font-medium text-sm transition-all duration-300 min-w-[60px] flex items-center justify-center transform hover:scale-105 ${
-              !product.isAvailable || (product.inStock || 0) <= 0
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : actionLoading[`add-${product._id}`]
-                ? "bg-green-400 text-white cursor-not-allowed"
-                : "bg-green-500 text-white hover:bg-green-600 hover:shadow-lg"
-            }`}
-          >
-            {actionLoading[`add-${product._id}`] ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            ) : !product.isAvailable ? (
-              "ไม่พร้อมขาย"
-            ) : (product.inStock || 0) <= 0 ? (
-              "หมด"
-            ) : (
-              "เพิ่ม"
-            )}
-          </button>
         </div>
       </div>
     </div>
@@ -217,9 +220,21 @@ function ProductGrid({ onProductEdit, showToast }) {
   ProductCard.displayName = "ProductCard";
 
   const ProductListItem = memo(({ product }) => (
-    <div className="bg-white rounded-lg border border-gray-100 p-4 flex items-center gap-4 hover:shadow-md transition-all duration-300 hover:scale-[1.02]">
+    <div
+      className="bg-white rounded-lg border border-gray-100 p-4 flex items-center gap-4 hover:shadow-md transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+      onClick={() => {
+        // เพิ่มสินค้าลงตระกร้าเมื่อคลิกที่ list item
+        if (
+          product.isAvailable &&
+          (product.inStock || 0) > 0 &&
+          !actionLoading[`add-${product._id}`]
+        ) {
+          handleAddToCart(product);
+        }
+      }}
+    >
       {/* Product Image */}
-      <div className="w-16 h-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+      <div className="relative w-16 h-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
         {product.imageUrl ? (
           <Image
             src={product.imageUrl}
@@ -230,6 +245,13 @@ function ProductGrid({ onProductEdit, showToast }) {
           />
         ) : (
           <Package className="w-8 h-8 text-gray-400" />
+        )}
+
+        {/* Loading Overlay for List */}
+        {actionLoading[`add-${product._id}`] && (
+          <div className="absolute inset-0 bg-black bg-opacity-20 rounded-lg flex items-center justify-center">
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          </div>
         )}
       </div>
 
@@ -260,36 +282,29 @@ function ProductGrid({ onProductEdit, showToast }) {
       {/* Actions */}
       <div className="flex items-center gap-2">
         <button
-          onClick={() => handleEditProduct(product)}
+          onClick={(e) => {
+            e.stopPropagation(); // ป้องกันไม่ให้ trigger list item click
+            handleEditProduct(product);
+          }}
           className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-300 hover:scale-110"
         >
           <Edit className="w-4 h-4" />
         </button>
-        <button
-          onClick={() => handleAddToCart(product)}
-          disabled={
-            !product.isAvailable ||
-            (product.inStock || 0) <= 0 ||
-            actionLoading[`add-${product._id}`]
-          }
-          className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 min-w-[70px] flex items-center justify-center transform hover:scale-105 ${
+
+        {/* Status Indicator */}
+        <div
+          className={`px-3 py-1 rounded-full text-xs font-medium ${
             !product.isAvailable || (product.inStock || 0) <= 0
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-              : actionLoading[`add-${product._id}`]
-              ? "bg-green-400 text-white cursor-not-allowed"
-              : "bg-green-500 text-white hover:bg-green-600 hover:shadow-lg"
+              ? "bg-gray-100 text-gray-400"
+              : "bg-green-100 text-green-600"
           }`}
         >
-          {actionLoading[`add-${product._id}`] ? (
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          ) : !product.isAvailable ? (
-            "ไม่พร้อมขาย"
-          ) : (product.inStock || 0) <= 0 ? (
-            "หมด"
-          ) : (
-            "เพิ่ม"
-          )}
-        </button>
+          {!product.isAvailable
+            ? "ไม่พร้อมขาย"
+            : (product.inStock || 0) <= 0
+            ? "สินค้าหมด"
+            : "พร้อมขาย"}
+        </div>
       </div>
     </div>
   ));

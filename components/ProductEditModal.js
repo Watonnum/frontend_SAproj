@@ -30,7 +30,7 @@ export default function ProductEditModal({ product, onClose, onSave }) {
         description: product.description || "",
         price: product.price || "",
         inStock: product.inStock || "",
-        categoryId: product.categoryId?._id || "",
+        categoryId: product.categoryId?._id || product.categoryId || "",
         isAvailable: product.isAvailable !== false,
         imageUrl: product.imageUrl || "",
       });
@@ -42,12 +42,21 @@ export default function ProductEditModal({ product, onClose, onSave }) {
     setLoading(true);
 
     try {
+      // Validation
+      if (!formData.categoryId) {
+        alert("กรุณาเลือกหมวดหมู่");
+        setLoading(false);
+        return;
+      }
+
       const updatedData = {
         ...formData,
         price: parseFloat(formData.price) || 0,
         inStock: parseInt(formData.inStock) || 0,
+        categoryId: formData.categoryId, // ตรวจสอบให้แน่ใจว่าไม่เป็น empty string
       };
 
+      console.log("Updating product with data:", updatedData);
       await updateProduct(product._id, updatedData);
       onSave(updatedData);
     } catch (error) {
@@ -65,10 +74,13 @@ export default function ProductEditModal({ product, onClose, onSave }) {
     }));
   };
 
-  const categoryOptions = categories.map((cat) => ({
-    value: cat._id,
-    label: cat.name,
-  }));
+  const categoryOptions = [
+    { value: "", label: "เลือกหมวดหมู่..." },
+    ...categories.map((cat) => ({
+      value: cat._id,
+      label: cat.name,
+    })),
+  ];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

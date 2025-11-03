@@ -24,6 +24,7 @@ import {
   Soup,
 } from "lucide-react";
 import { useCategories } from "../hooks/useCategories";
+import { useAuth } from "../hooks/useAuth";
 
 const NavItem = ({
   href,
@@ -108,6 +109,7 @@ const NavItem = ({
 export default function Sidebar({ collapsed, onToggle }) {
   const pathname = usePathname();
   const [categoriesExpanded, setCategoriesExpanded] = useState(false);
+  const { logout } = useAuth();
 
   const {
     categories,
@@ -116,8 +118,8 @@ export default function Sidebar({ collapsed, onToggle }) {
   } = useCategories();
 
   const handleLogout = () => {
-    // เพิ่ม logout logic ที่นี่
-    console.log("Logout clicked");
+    // เรียก logout function จาก useAuth
+    logout();
   };
 
   const getCategoryIcon = (categoryName) => {
@@ -131,10 +133,10 @@ export default function Sidebar({ collapsed, onToggle }) {
 
   const menuItems = [
     { href: "/pos", icon: LayoutDashboard, label: "POS System" },
-    { href: "/data", icon: Package, label: "Products" },
-    { href: "/categories", icon: BarChart3, label: "Categories" },
-    { href: "/users-simple", icon: Users, label: "Users" },
-    { href: "/orders", icon: FileText, label: "Orders" },
+    // { href: "/data", icon: Package, label: "Products" },
+    // { href: "/categories", icon: BarChart3, label: "Categories" },
+    // { href: "/users-simple", icon: Users, label: "Users" },
+    // { href: "/orders", icon: FileText, label: "Orders" },
   ];
 
   return (
@@ -149,7 +151,7 @@ export default function Sidebar({ collapsed, onToggle }) {
           {!collapsed && (
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
-                <Coffee className="w-5 h-5 text-white" />
+                <ShoppingBag className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold text-gray-800">MIT POS</span>
             </div>
@@ -190,7 +192,7 @@ export default function Sidebar({ collapsed, onToggle }) {
           ))}
         </div>
 
-        {/* Categories Dropdown */}
+        {/* Categories Dropdown
         {!collapsed && (
           <div className="pt-4">
             <div className="text-xs uppercase text-gray-400 tracking-wider px-1 mb-3 font-semibold">
@@ -232,7 +234,7 @@ export default function Sidebar({ collapsed, onToggle }) {
               </Link>
             );
           })}
-        </NavItem>
+        </NavItem> */}
       </div>
 
       {/* Footer */}
