@@ -110,7 +110,7 @@ export default function ShopPage() {
               ค้นหาและกรองสินค้า
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Search */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
@@ -141,7 +141,7 @@ export default function ShopPage() {
               </div>
 
               {/* Category Filter */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
                   หมวดหมู่
                 </label>
@@ -156,7 +156,7 @@ export default function ShopPage() {
                     </option>
                   ))}
                 </select>
-              </div>
+              </div> */}
 
               {/* Sort */}
               <div className="space-y-2">
