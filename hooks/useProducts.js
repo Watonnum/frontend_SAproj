@@ -14,21 +14,30 @@ export function ProductsProvider({ children }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const fetchProducts = useCallback(async () => {
-    setLoading(products.length === 0);
+    // แสดง loading เฉพาะเมื่อไม่เคยโหลดมาก่อน
+    if (!isInitialized) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const data = await productApi.getAll();
       setProducts(data);
+      if (!isInitialized) {
+        setIsInitialized(true);
+      }
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : "เกิดข้อผิดพลาดในการดึงข้อมูล"
       );
     } finally {
-      setLoading(false);
+      if (!isInitialized) {
+        setLoading(false);
+      }
     }
-  }, []);
+  }, [isInitialized]);
 
   // ดึงข้อมูลเมื่อ component mount
   useEffect(() => {
@@ -37,7 +46,6 @@ export function ProductsProvider({ children }) {
 
   // สร้างสินค้าใหม่
   const createProduct = useCallback(async (productData) => {
-    setLoading(true);
     setError(null);
     try {
       const newProduct = await productApi.create(productData);
@@ -48,14 +56,11 @@ export function ProductsProvider({ children }) {
         err instanceof ApiError ? err.message : "เกิดข้อผิดพลาดในการสร้างข้อมูล"
       );
       throw err;
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   // อัพเดทสินค้า
   const updateProduct = useCallback(async (id, productData) => {
-    setLoading(true);
     setError(null);
     try {
       const updatedProduct = await productApi.update(id, productData);
@@ -70,14 +75,11 @@ export function ProductsProvider({ children }) {
           : "เกิดข้อผิดพลาดในการอัพเดทข้อมูล"
       );
       throw err;
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   // ลบสินค้า
   const deleteProduct = useCallback(async (id) => {
-    setLoading(true);
     setError(null);
     try {
       await productApi.delete(id);
@@ -87,20 +89,24 @@ export function ProductsProvider({ children }) {
         err instanceof ApiError ? err.message : "เกิดข้อผิดพลาดในการลบข้อมูล"
       );
       throw err;
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   // อัพเดทจำนวนสินค้าใน local state (สำหรับ real-time update)
   const updateLocalProductStock = useCallback((productId, newStock) => {
     setProducts((prevProducts) => {
-      const updated = prevProducts.map((product) =>
-        product._id === productId
-          ? { ...product, inStock: Math.max(0, newStock) }
-          : product
-      );
-      return updated;
+      return prevProducts.map((product) => {
+        if (product._id === productId) {
+          // รักษาข้อมูล categoryId และข้อมูลอื่นๆ ไว้
+          return {
+            ...product,
+            inStock: Math.max(0, newStock),
+            // ให้แน่ใจว่า categoryId ยังอยู่
+            categoryId: product.categoryId,
+          };
+        }
+        return product;
+      });
     });
   }, []);
 

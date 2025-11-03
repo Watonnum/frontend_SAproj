@@ -5,50 +5,6 @@ import { FaDollarSign } from "react-icons/fa6";
 import Table from "../components/Table";
 
 export default function Home() {
-  const mock_Stat = [
-    {
-      _id: 1,
-      label: "Total Revenue",
-      value: "XXX,XXX",
-      icon: <FaDollarSign className="h-8 mr-4" />,
-    },
-    {
-      _id: 2,
-      label: "Avg. Order Value",
-      value: "XXX,XXX",
-    },
-    {
-      _id: 3,
-      label: "Total Shipment",
-      value: "XXX,XXX",
-    },
-  ];
-
-  const mock_customers = [
-    {
-      _id: 1,
-      customer: {
-        userId: "usr1",
-        name: "Jackson schoolBoi",
-        email: "adamcorktail@gmail.com",
-        last_active: new Date(),
-      },
-      status: true,
-      subcription: true,
-    },
-    {
-      _id: 2,
-      customer: {
-        userId: "usr2",
-        name: "Watanyu onnum",
-        email: "ipae.wo@gmail.com",
-        last_active: new Date(),
-      },
-      status: true,
-      subcription: false,
-    },
-  ];
-
   return (
     <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Head */}
@@ -93,20 +49,7 @@ export default function Home() {
           </div>
 
           {/* Summary */}
-          <div className="grid grid-cols-3 gap-4">
-            {/* map */}
-            {mock_Stat.map((item, index) => {
-              return (
-                <Card key={index}>
-                  <p className="text-xl font-light opacity-90">Total Revenue</p>
-                  <CardContent className="my-4 text-2xl flex">
-                    <div>{item?.icon}</div>
-                    <p>{item?.value}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          <div className="grid grid-cols-3 gap-4"></div>
 
           {/* Transaction activity */}
           <Card className="">
@@ -122,9 +65,7 @@ export default function Home() {
           <CardHeader>
             <CardTitle>Customers detail</CardTitle>
           </CardHeader>
-          <CardContent>
-            <Table sourceData={mock_customers} />
-          </CardContent>
+          <CardContent></CardContent>
         </Card>
       </div>
     </div>

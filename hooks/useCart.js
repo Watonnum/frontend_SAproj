@@ -4,6 +4,7 @@ import {
   useCallback,
   createContext,
   useContext,
+  useRef,
 } from "react";
 import { cartApi } from "../lib/api";
 import { toast } from "sonner";
@@ -12,16 +13,21 @@ import { useProducts } from "./useProducts";
 
 const CartContext = createContext(null);
 
+export { CartContext };
+
 export function CartProvider({ children }) {
   const { user } = useAuth();
-  const { products, updateProduct, updateLocalProductStock } = useProducts();
+  const { products, updateLocalProductStock } = useProducts();
+
   const [cart, setCart] = useState({
     items: [],
     totalAmount: 0,
     totalItems: 0,
   });
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState({}); // Track loading per action
   const [error, setError] = useState(null);
+  const debounceTimers = useRef({}); // Store debounce timers
 
   const userId = user?._id || "guest";
 
@@ -47,10 +53,36 @@ export function CartProvider({ children }) {
 
   const addItem = useCallback(
     async (productId, quantity = 1, productName = "Product") => {
-      setLoading(true);
+      // ป้องกัน spam click
+      const actionKey = `add-${productId}`;
+      if (actionLoading[actionKey] || loading) {
+        toast.warning("กรุณารอสักครู่...");
+        return;
+      }
+
+      setActionLoading((prev) => ({ ...prev, [actionKey]: true }));
+
       try {
+        // เช็ค stock ก่อนเพิ่มลงตระกร้า - ใช้ closure เพื่อได้ products ล่าสุด
+        const currentProducts = products;
+        const product = currentProducts.find((p) => p._id === productId);
+        if (!product) {
+          throw new Error("Product not found");
+        }
+
+        if (product.inStock < quantity) {
+          throw new Error("Insufficient stock");
+        }
+
         const data = await cartApi.addToCart(productId, quantity, userId);
         setCart(data.cart || data);
+
+        // ลด stock ของสินค้า (delay เล็กน้อยเพื่อไม่ให้ re-render ทันที)
+        setTimeout(() => {
+          const newStock = product.inStock - quantity;
+          updateLocalProductStock(productId, newStock);
+        }, 50);
+
         toast.success(`Added ${productName} to cart`, {
           description: `Quantity: ${quantity}`,
         });
@@ -62,111 +94,178 @@ export function CartProvider({ children }) {
         });
         throw error;
       } finally {
-        setLoading(false);
+        // ลด delay เพื่อลดการกระพริบ
+        setTimeout(() => {
+          setActionLoading((prev) => ({ ...prev, [actionKey]: false }));
+        }, 100);
       }
     },
-    [userId]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [userId, updateLocalProductStock, actionLoading, loading]
   );
 
   const updateQuantity = useCallback(
-    async (productId, quantity) => {
-      const item = cart.items.find(
-        (i) => (i.productId?._id || i.productId) === productId
-      );
+    async (itemId, newQuantity) => {
+      // ป้องกัน spam click
+      const actionKey = `update-${itemId}`;
+      if (actionLoading[actionKey] || loading) {
+        return;
+      }
+
+      // หา item ในตระกร้า
+      const item = cart.items.find((i) => i._id === itemId);
       if (!item) return;
 
-      const quantityChange = quantity - item.quantity;
+      const productId = item.productId?._id || item.productId;
+      const quantityChange = newQuantity - item.quantity; // บวก = เพิ่ม, ลบ = ลด
 
-      setLoading(true);
-      try {
-        const data = await cartApi.updateCartItem(productId, quantity, userId);
-        setCart(data);
-
-        const product = products.find((p) => p._id === productId);
-        if (product) {
-          const newStock = product.inStock - quantityChange;
-          await updateProduct(productId, { inStock: newStock });
-          updateLocalProductStock(productId, newStock);
-        }
-      } catch (error) {
-        setError(error.message || "Failed to update cart");
-        toast.error("Failed to update item quantity");
-      } finally {
-        setLoading(false);
+      // Clear existing debounce timer
+      if (debounceTimers.current[actionKey]) {
+        clearTimeout(debounceTimers.current[actionKey]);
       }
+
+      // Set loading state immediately for UI feedback
+      setActionLoading((prev) => ({ ...prev, [actionKey]: true }));
+
+      // Debounce the actual API call
+      debounceTimers.current[actionKey] = setTimeout(async () => {
+        try {
+          // เช็ค stock ถ้าจะเพิ่มจำนวน
+          if (quantityChange > 0) {
+            const currentProducts = products;
+            const product = currentProducts.find((p) => p._id === productId);
+            if (!product || product.inStock < quantityChange) {
+              throw new Error("Insufficient stock");
+            }
+          }
+
+          const data = await cartApi.updateCartItem(
+            productId,
+            newQuantity,
+            userId
+          );
+          setCart(data);
+
+          // อัพเดท stock ของสินค้า (local update เท่านั้น)
+          const currentProducts = products;
+          const product = currentProducts.find((p) => p._id === productId);
+          if (product) {
+            const newStock = product.inStock - quantityChange; // ลด stock ตามจำนวนที่เพิ่ม
+            updateLocalProductStock(productId, newStock);
+          }
+        } catch (error) {
+          setError(error.message || "Failed to update cart");
+          toast.error("Failed to update item quantity", {
+            description: error.message,
+          });
+        } finally {
+          setActionLoading((prev) => ({ ...prev, [actionKey]: false }));
+        }
+      }, 200); // ลด debounce เป็น 200ms
     },
-    [userId, cart.items, products, updateProduct, updateLocalProductStock]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [userId, cart.items, updateLocalProductStock, actionLoading, loading]
   );
 
   const removeItem = useCallback(
     async (productId) => {
+      // ป้องกัน spam click
+      const actionKey = `remove-${productId}`;
+      if (actionLoading[actionKey] || loading) {
+        return;
+      }
+
+      // หา item ที่จะลบ
       const itemToRemove = cart.items.find(
-        (i) => (i.productId?._id || i.productId) === productId
+        (i) =>
+          (i.productId?._id || i.productId) === productId || i._id === productId
       );
       if (!itemToRemove) return;
 
-      setLoading(true);
+      setActionLoading((prev) => ({ ...prev, [actionKey]: true }));
+
       try {
-        const data = await cartApi.removeFromCart(productId, userId);
+        // ลบออกจาก cart โดยใช้ productId (ไม่ใช่ cart item id)
+        const realProductId =
+          itemToRemove.productId?._id || itemToRemove.productId;
+        const data = await cartApi.removeFromCart(realProductId, userId);
         setCart(data);
 
-        const product = products.find((p) => p._id === productId);
+        // คืน stock กลับ (local update เท่านั้น)
+        const currentProducts = products;
+        const product = currentProducts.find((p) => p._id === realProductId);
         if (product) {
           const newStock = product.inStock + itemToRemove.quantity;
-          await updateProduct(productId, { inStock: newStock });
-          updateLocalProductStock(productId, newStock);
+          updateLocalProductStock(realProductId, newStock);
         }
+
         toast.success("Item removed from cart");
       } catch (error) {
         setError(error.message || "Failed to remove item");
         toast.error("Error removing item");
       } finally {
-        setLoading(false);
+        setTimeout(() => {
+          setActionLoading((prev) => ({ ...prev, [actionKey]: false }));
+        }, 100);
       }
     },
-    [userId, cart.items, products, updateProduct, updateLocalProductStock]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [userId, cart.items, updateLocalProductStock, actionLoading, loading]
   );
 
   const clearCart = useCallback(async () => {
-    setLoading(true);
-    try {
-      const stockToReturn = cart.items.reduce((acc, item) => {
-        const productId = item.productId?._id || item.productId;
-        const product = products.find((p) => p._id === productId);
-        if (product) {
-          acc[productId] = {
-            quantity: item.quantity,
-            currentStock: product.inStock,
-          };
-        }
-        return acc;
-      }, {});
+    if (cart.items.length === 0) return;
 
+    // ป้องกัน spam click
+    if (loading) {
+      toast.warning("กรุณารอสักครู่...");
+      return;
+    }
+
+    // ใช้ actionLoading แทน loading เพื่อประสิทธิภาพ
+    setActionLoading((prev) => ({ ...prev, clearCart: true }));
+
+    try {
+      // เก็บข้อมูล stock ที่ต้องคืน
+      const stockToReturn = cart.items.map((item) => {
+        const productId = item.productId?._id || item.productId;
+        const currentProducts = products;
+        const product = currentProducts.find((p) => p._id === productId);
+        return {
+          productId,
+          quantity: item.quantity,
+          currentStock: product?.inStock || 0,
+        };
+      });
+
+      // ล้างตระกร้า
       await cartApi.clearCart(userId);
       setCart({ items: [], totalAmount: 0, totalItems: 0 });
 
-      const updatePromises = Object.entries(stockToReturn).map(
-        ([productId, { quantity, currentStock }]) => {
+      // คืน stock กลับ (local update เท่านั้น)
+      const updatePromises = stockToReturn.map(
+        ({ productId, quantity, currentStock }) => {
           const newStock = currentStock + quantity;
           updateLocalProductStock(productId, newStock);
-          return updateProduct(productId, { inStock: newStock });
         }
       );
-
-      await Promise.all(updatePromises);
 
       toast.success("Cart cleared and stock restored");
     } catch (error) {
       setError(error.message || "Failed to clear cart");
       toast.error("An error occurred while clearing the cart.");
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setActionLoading((prev) => ({ ...prev, clearCart: false }));
+      }, 100);
     }
-  }, [userId, cart.items, products, updateProduct, updateLocalProductStock]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, cart.items, updateLocalProductStock, loading]);
 
   const value = {
     cart,
     loading,
+    actionLoading,
     error,
     fetchCart,
     addItem,
