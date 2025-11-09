@@ -4,8 +4,9 @@ import Card, {
   CardTitle,
   CardContent,
 } from "../../components/Card";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
-export default function SettingsPage() {
+function SettingsPageContent() {
   return (
     <div className="min-h-screen">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -20,5 +21,13 @@ export default function SettingsPage() {
         </Card>
       </main>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <ProtectedRoute requiredPermission="settings:read">
+      <SettingsPageContent />
+    </ProtectedRoute>
   );
 }

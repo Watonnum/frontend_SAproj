@@ -22,6 +22,7 @@ import Image from "next/image";
 import { useProducts } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { CartContext } from "@/hooks/useCart";
+import { usePermissions } from "@/hooks/usePermissions";
 import LoadingSpinner from "./LoadingSpinner";
 import Modal from "./Modal";
 import ProductEditModal from "./ProductEditModal";
@@ -33,6 +34,7 @@ function ProductGrid({ onProductEdit, showToast }) {
     addItem: () => {},
     actionLoading: {},
   };
+  const { hasPermission } = usePermissions();
 
   // States for filtering and sorting
   const [searchTerm, setSearchTerm] = useState("");
@@ -168,15 +170,17 @@ function ProductGrid({ onProductEdit, showToast }) {
         </div>
 
         {/* Edit Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation(); // ป้องกันไม่ให้ trigger card click
-            handleEditProduct(product);
-          }}
-          className="absolute top-3 left-3 w-8 h-8 bg-white bg-opacity-90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-opacity-100 hover:scale-110 z-10"
-        >
-          <Edit className="w-4 h-4 text-gray-600" />
-        </button>
+        {hasPermission("products", "update") && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // ป้องกันไม่ให้ trigger card click
+              handleEditProduct(product);
+            }}
+            className="absolute top-3 left-3 w-8 h-8 bg-white bg-opacity-90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-opacity-100 hover:scale-110 z-10"
+          >
+            <Edit className="w-4 h-4 text-gray-600" />
+          </button>
+        )}
 
         {/* Loading Overlay */}
         {actionLoading[`add-${product._id}`] && (
@@ -281,15 +285,17 @@ function ProductGrid({ onProductEdit, showToast }) {
 
       {/* Actions */}
       <div className="flex items-center gap-2">
-        <button
-          onClick={(e) => {
-            e.stopPropagation(); // ป้องกันไม่ให้ trigger list item click
-            handleEditProduct(product);
-          }}
-          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-300 hover:scale-110"
-        >
-          <Edit className="w-4 h-4" />
-        </button>
+        {hasPermission("products", "update") && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // ป้องกันไม่ให้ trigger list item click
+              handleEditProduct(product);
+            }}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-300 hover:scale-110"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+        )}
 
         {/* Status Indicator */}
         <div

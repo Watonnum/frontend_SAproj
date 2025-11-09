@@ -6,7 +6,8 @@ import {
   createContext,
   useContext,
 } from "react";
-import { categoryApi, ApiError } from "../lib/api";
+import { categoriesApi, ApiError } from "../lib/api";
+import { checkLoginStatus, hasPermission } from "../lib/auth";
 
 const CategoriesContext = createContext(null);
 
@@ -14,12 +15,21 @@ export function CategoriesProvider({ children }) {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const fetchCategories = useCallback(async () => {
+    // ตรวจสอบ login status และ permission ก่อน
+    const loggedIn = await checkLoginStatus();
+    if (!loggedIn || !hasPermission("categories", "read")) {
+      setCategories([]);
+      setError(null);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
-      const data = await categoryApi.getAll();
+      const data = await categoriesApi.getAll();
       setCategories(data);
     } catch (err) {
       setError(
@@ -34,11 +44,51 @@ export function CategoriesProvider({ children }) {
     fetchCategories();
   }, [fetchCategories]);
 
+  // ตรวจสอบและ listen การเปลี่ยนแปลง login status
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      const loginStatus = await checkLoginStatus();
+      setIsLoggedIn(loginStatus);
+
+      if (loginStatus && hasPermission("categories", "read")) {
+        fetchCategories();
+      } else {
+        // เมื่อ logout หรือไม่มีสิทธิ์ ให้เคลียร์ข้อมูล
+        setCategories([]);
+        setError(null);
+      }
+    };
+
+    // เช็คสถานะเริ่มต้น
+    checkAuthStatus();
+
+    // Listen storage changes (เมื่อ login/logout)
+    const handleStorageChange = (e) => {
+      if (e.key === "isLoggedIn" || e.key === "authToken") {
+        checkAuthStatus();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    // Custom event สำหรับ same-tab changes
+    const handleAuthChange = () => {
+      checkAuthStatus();
+    };
+
+    window.addEventListener("auth-changed", handleAuthChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("auth-changed", handleAuthChange);
+    };
+  }, [fetchCategories]);
+
   const createCategory = useCallback(async (categoryData) => {
     setLoading(true);
     setError(null);
     try {
-      const newCategory = await categoryApi.create(categoryData);
+      const newCategory = await categoriesApi.create(categoryData);
       setCategories((prev) => [...prev, newCategory]);
       return newCategory;
     } catch (err) {
@@ -55,7 +105,7 @@ export function CategoriesProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
-      const updatedCategory = await categoryApi.update(id, categoryData);
+      const updatedCategory = await categoriesApi.update(id, categoryData);
       setCategories((prev) =>
         prev.map((category) =>
           category._id === id ? updatedCategory : category
@@ -78,7 +128,7 @@ export function CategoriesProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
-      await categoryApi.delete(id);
+      await categoriesApi.delete(id);
       setCategories((prev) => prev.filter((category) => category._id !== id));
     } catch (err) {
       setError(
@@ -127,7 +177,7 @@ export function useCategory(id) {
     setLoading(true);
     setError(null);
     try {
-      const data = await categoryApi.getById(id);
+      const data = await categoriesApi.getById(id);
       setCategory(data);
     } catch (err) {
       setError(

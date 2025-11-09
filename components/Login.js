@@ -16,13 +16,18 @@ export default function Login() {
     setFormLogin((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = login(formLogin.email, formLogin.password);
-    if (result.success) {
-      toast.success(result.message);
-    } else {
-      toast.error(result.message);
+    try {
+      const result = await login(formLogin.email, formLogin.password);
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
     }
   };
 

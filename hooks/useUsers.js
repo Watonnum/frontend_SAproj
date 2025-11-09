@@ -7,6 +7,7 @@ import {
   useContext,
 } from "react";
 import { usersApi, ApiError } from "../lib/api";
+import { checkLoginStatus, hasPermission } from "../lib/auth";
 
 const UsersContext = createContext(null);
 
@@ -14,8 +15,25 @@ export function UsersProvider({ children }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const fetchUsers = useCallback(async () => {
+    // ตรวจสอบ login status และ permission ก่อน
+    if (!checkLoginStatus()) {
+      setUsers([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
+    // เช็ค permission สำหรับ users API (ต้องการ admin)
+    if (!hasPermission("users", "read")) {
+      setUsers([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -30,6 +48,46 @@ export function UsersProvider({ children }) {
 
   useEffect(() => {
     fetchUsers();
+  }, [fetchUsers]);
+
+  // ตรวจสอบและ listen การเปลี่ยนแปลง login status
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      const loginStatus = checkLoginStatus();
+      setIsLoggedIn(loginStatus);
+
+      if (loginStatus && hasPermission("users", "read")) {
+        fetchUsers();
+      } else {
+        // เมื่อ logout หรือไม่มีสิทธิ์ ให้เคลียร์ข้อมูล
+        setUsers([]);
+        setError(null);
+      }
+    };
+
+    // เช็คสถานะเริ่มต้น
+    checkAuthStatus();
+
+    // Listen storage changes (เมื่อ login/logout)
+    const handleStorageChange = (e) => {
+      if (e.key === "isLoggedIn" || e.key === "authToken") {
+        checkAuthStatus();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    // Custom event สำหรับ same-tab changes
+    const handleAuthChange = () => {
+      checkAuthStatus();
+    };
+
+    window.addEventListener("auth-changed", handleAuthChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("auth-changed", handleAuthChange);
+    };
   }, [fetchUsers]);
 
   const createUser = useCallback(async (userData) => {

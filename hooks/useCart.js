@@ -16,8 +16,13 @@ const CartContext = createContext(null);
 export { CartContext };
 
 export function CartProvider({ children }) {
-  const { user } = useAuth();
-  const { products, updateLocalProductStock, fetchProducts } = useProducts();
+  const { user, isLoggedIn, loading: authLoading } = useAuth();
+  const {
+    products,
+    updateLocalProductStock,
+    fetchProducts,
+    loading: productsLoading,
+  } = useProducts();
 
   const [cart, setCart] = useState({
     items: [],
@@ -29,10 +34,10 @@ export function CartProvider({ children }) {
   const [error, setError] = useState(null);
   const debounceTimers = useRef({}); // Store debounce timers
 
-  const userId = user?._id || "guest";
+  const userId = user?.id || user?._id; // แก้ไขให้รองรับทั้ง id และ _id
 
   const fetchCart = useCallback(async () => {
-    if (!userId || userId === "guest") {
+    if (!isLoggedIn || !userId) {
       setCart({ items: [], totalAmount: 0, totalItems: 0 });
       return;
     }
@@ -42,10 +47,11 @@ export function CartProvider({ children }) {
       setCart(data || { items: [], totalAmount: 0, totalItems: 0 });
     } catch (error) {
       setError("Failed to load cart");
+      setCart({ items: [], totalAmount: 0, totalItems: 0 });
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [isLoggedIn, userId]);
 
   useEffect(() => {
     fetchCart();
@@ -53,6 +59,23 @@ export function CartProvider({ children }) {
 
   const addItem = useCallback(
     async (productId, quantity = 1, productName = "Product") => {
+      // รอให้ auth loading เสร็จและตรวจสอบให้ครบถ้วน
+      if (authLoading || !user || !isLoggedIn || !userId) {
+        if (authLoading) {
+          toast.warning("กรุณารอสักครู่...");
+          return;
+        }
+
+        toast.error("Please login to add items to cart");
+        return;
+      }
+
+      // รอให้ products โหลดเสร็จก่อน
+      if (productsLoading || products.length === 0) {
+        toast.warning("กำลังโหลดข้อมูลสินค้า กรุณารอสักครู่...");
+        return;
+      }
+
       // ป้องกัน spam click
       const actionKey = `add-${productId}`;
       if (actionLoading[actionKey] || loading) {
@@ -101,11 +124,31 @@ export function CartProvider({ children }) {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [userId, updateLocalProductStock, actionLoading, loading]
+    [
+      userId,
+      authLoading,
+      productsLoading,
+      products,
+      updateLocalProductStock,
+      actionLoading,
+      loading,
+    ]
   );
 
   const updateQuantity = useCallback(
     async (itemId, newQuantity) => {
+      // รอให้ auth loading เสร็จก่อน
+      if (authLoading) {
+        toast.warning("กรุณารอสักครู่...");
+        return;
+      }
+
+      // ตรวจสอบ authentication หลังจาก auth loading เสร็จ
+      if (!isLoggedIn || !userId) {
+        toast.error("Please login to update cart");
+        return;
+      }
+
       // ป้องกัน spam click
       const actionKey = `update-${itemId}`;
       if (actionLoading[actionKey] || loading) {
@@ -160,11 +203,31 @@ export function CartProvider({ children }) {
       }, 200); // ลด debounce เป็น 200ms
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [userId, cart.items, updateLocalProductStock, actionLoading, loading]
+    [
+      userId,
+      isLoggedIn,
+      authLoading,
+      cart.items,
+      updateLocalProductStock,
+      actionLoading,
+      loading,
+    ]
   );
 
   const removeItem = useCallback(
     async (productId) => {
+      // รอให้ auth loading เสร็จก่อน
+      if (authLoading) {
+        toast.warning("กรุณารอสักครู่...");
+        return;
+      }
+
+      // ตรวจสอบ authentication หลังจาก auth loading เสร็จ
+      if (!isLoggedIn || !userId) {
+        toast.error("Please login to modify cart");
+        return;
+      }
+
       // ป้องกัน spam click
       const actionKey = `remove-${productId}`;
       if (actionLoading[actionKey] || loading) {
@@ -201,10 +264,30 @@ export function CartProvider({ children }) {
         }, 100);
       }
     },
-    [userId, cart.items, actionLoading, loading, fetchProducts]
+    [
+      userId,
+      isLoggedIn,
+      authLoading,
+      cart.items,
+      actionLoading,
+      loading,
+      fetchProducts,
+    ]
   );
 
   const clearCart = useCallback(async () => {
+    // รอให้ auth loading เสร็จก่อน
+    if (authLoading) {
+      toast.warning("กรุณารอสักครู่...");
+      return;
+    }
+
+    // ตรวจสอบ authentication หลังจาก auth loading เสร็จ
+    if (!isLoggedIn || !userId) {
+      toast.error("Please login to clear cart");
+      return;
+    }
+
     if (cart.items.length === 0) return;
 
     // ป้องกัน spam click
@@ -233,7 +316,7 @@ export function CartProvider({ children }) {
         setActionLoading((prev) => ({ ...prev, clearCart: false }));
       }, 100);
     }
-  }, [userId, cart.items, loading, fetchProducts]);
+  }, [userId, isLoggedIn, authLoading, cart.items, loading, fetchProducts]);
 
   const value = {
     cart,
@@ -245,6 +328,7 @@ export function CartProvider({ children }) {
     updateQuantity,
     removeItem,
     clearCart,
+    isInitializing: authLoading || productsLoading, // เพิ่ม state นี้เพื่อ UI
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

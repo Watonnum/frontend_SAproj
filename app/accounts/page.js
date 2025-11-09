@@ -14,9 +14,10 @@ import Input from "@/components/Input";
 import Toast from "@/components/Toast";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { useUsers } from "@/hooks/useUsers";
 
-export default function UsersPage() {
+function UsersPageContent() {
   console.log("🚀 [UsersPage] Component rendering...");
   const { users, loading, error, createUsers, updateUsers, deleteUsers } =
     useUsers();
@@ -465,5 +466,13 @@ export default function UsersPage() {
         onClose={() => setToast({ show: false, message: "", type: "info" })}
       />
     </div>
+  );
+}
+
+export default function UsersPage() {
+  return (
+    <ProtectedRoute requiredPermission="users:read">
+      <UsersPageContent />
+    </ProtectedRoute>
   );
 }

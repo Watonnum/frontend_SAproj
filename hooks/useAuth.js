@@ -14,7 +14,7 @@ import {
   clearLoginStatus,
   getLoggedInUser,
 } from "../lib/auth";
-import { useUsers } from "./useUsers"; // Import useUsers
+import api from "../lib/api";
 
 const AuthContext = createContext(null);
 
@@ -22,56 +22,114 @@ export function AuthProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { users, updateUsers, loading: usersLoading } = useUsers(); // Get users and updateUsers
 
+  // ตรวจสอบสถานะ login เมื่อ component mount (client-side only)
   useEffect(() => {
-    const status = checkLoginStatus();
-    setIsLoggedIn(status);
-    if (status) {
-      const loggedInUserEmail = getLoggedInUser();
-      if (loggedInUserEmail && users.length > 0) {
-        const currentUser = users.find(
-          (u) => u.email === loggedInUserEmail && u.isActive
-        );
-        setUser(currentUser || null);
-      }
-    }
-    setLoading(false);
-  }, [users]); // Re-run when users array is updated
+    const checkAuth = async () => {
+      const status = checkLoginStatus();
+      setIsLoggedIn(status);
 
-  const login = useCallback(
-    (email, password) => {
-      if (usersLoading) {
-        console.log("Cannot log in while users are loading.");
-        return { success: false, message: "กำลังโหลดข้อมูลผู้ใช้..." };
+      if (status) {
+        try {
+          // ตรวจสอบ token กับ server และดึงข้อมูลผู้ใช้
+          const userData = getLoggedInUser();
+          if (userData && userData.email) {
+            setUser(userData);
+          } else {
+            // ถ้าไม่มีข้อมูลใน localStorage ให้ logout
+            clearLoginStatus();
+            setIsLoggedIn(false);
+          }
+        } catch (error) {
+          console.error("Auth check error:", error);
+          clearLoginStatus();
+          setIsLoggedIn(false);
+        }
       }
-      const userToLogin = users.find(
-        (u) => u.email === email && u.passwordHash === password
-      );
+      setLoading(false);
+    };
 
-      if (userToLogin) {
-        updateUsers(userToLogin._id, { isActive: true });
-        saveLoginStatus(email);
+    checkAuth();
+  }, []);
+
+  const login = useCallback(async (email, password) => {
+    try {
+      setLoading(true);
+
+      const response = await fetch(`${api.baseURL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // บันทึก token
+        localStorage.setItem("authToken", data.token);
+
+        // บันทึกข้อมูลการ login
+        saveLoginStatus(data.user.email, data.user.role, data.user);
+
         setIsLoggedIn(true);
-        setUser(userToLogin);
+        setUser(data.user);
+
+        // ส่ง event เพื่อให้ data hooks รู้ว่ามีการ login
+        window.dispatchEvent(new CustomEvent("auth-changed"));
+
         return {
           success: true,
-          message: `ยินดีต้อนรับ, ${userToLogin.fName}`,
+          message: `ยินดีต้อนรับ, ${data.user.fName}`,
+        };
+      } else {
+        return {
+          success: false,
+          message: data.message || "เข้าสู่ระบบไม่สำเร็จ",
         };
       }
-      return { success: false, message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" };
-    },
-    [users, updateUsers, usersLoading]
-  );
-
-  const logout = useCallback(() => {
-    if (user) {
-      updateUsers(user._id, { isActive: false });
+    } catch (error) {
+      console.error("Login error:", error);
+      return {
+        success: false,
+        message: "เกิดข้อผิดพลาดในการเชื่อมต่อ",
+      };
+    } finally {
+      setLoading(false);
     }
-    clearLoginStatus();
-    setIsLoggedIn(false);
-    setUser(null);
-  }, [user, updateUsers]);
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      // เรียก logout API (optional)
+      const token = localStorage.getItem("authToken");
+      if (token) {
+        try {
+          await fetch(`${api.baseURL}/auth/logout`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+        } catch (error) {
+          console.error("Logout API error:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // ล้างข้อมูลในทุกกรณี
+      localStorage.removeItem("authToken");
+      clearLoginStatus();
+      setIsLoggedIn(false);
+      setUser(null);
+
+      // ส่ง event เพื่อให้ data hooks รู้ว่ามีการ logout
+      window.dispatchEvent(new CustomEvent("auth-changed"));
+    }
+  }, []);
 
   const value = {
     isLoggedIn,

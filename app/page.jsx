@@ -2,7 +2,6 @@ import Card, { CardHeader, CardTitle, CardContent } from "../components/Card";
 import { Bell } from "lucide-react";
 import Search from "@/components/Search";
 import { FaDollarSign } from "react-icons/fa6";
-import Table from "../components/Table";
 
 export default function Home() {
   return (

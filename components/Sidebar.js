@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useCategories } from "../hooks/useCategories";
 import { useAuth } from "../hooks/useAuth";
+import { usePermissions } from "../hooks/usePermissions";
 
 const NavItem = ({
   href,
@@ -110,6 +111,7 @@ export default function Sidebar({ collapsed, onToggle }) {
   const pathname = usePathname();
   const [categoriesExpanded, setCategoriesExpanded] = useState(false);
   const { logout } = useAuth();
+  const { hasPermission, userRole } = usePermissions();
 
   const {
     categories,
@@ -131,13 +133,49 @@ export default function Sidebar({ collapsed, onToggle }) {
     return Sandwich;
   };
 
-  const menuItems = [
-    { href: "/pos", icon: LayoutDashboard, label: "POS System" },
-    // { href: "/data", icon: Package, label: "Products" },
-    // { href: "/categories", icon: BarChart3, label: "Categories" },
-    // { href: "/users-simple", icon: Users, label: "Users" },
-    // { href: "/orders", icon: FileText, label: "Orders" },
-  ];
+  // สร้างเมนูตาม permission ของ user
+  const getMenuItems = () => {
+    const items = [];
+
+    // POS System - ทุกคนเข้าได้
+    if (hasPermission("pos", "read")) {
+      items.push({ href: "/pos", icon: LayoutDashboard, label: "POS System" });
+    }
+
+    // Products Management - เฉพาะ admin และ manager
+    if (hasPermission("products", "read")) {
+      items.push({ href: "/data", icon: Package, label: "Products" });
+    }
+
+    // Categories Management - เฉพาะ admin และ manager
+    if (hasPermission("categories", "read")) {
+      items.push({ href: "/categories", icon: BarChart3, label: "Categories" });
+    }
+
+    // Users Management - เฉพาะ admin
+    if (hasPermission("users", "read")) {
+      items.push({ href: "/accounts", icon: Users, label: "Users" });
+    }
+
+    // Orders - admin, manager และ operator (ดู order ได้)
+    if (hasPermission("orders", "read")) {
+      items.push({ href: "/orders", icon: FileText, label: "Orders" });
+    }
+
+    // Cart - ทุกคน
+    if (hasPermission("cart", "read")) {
+      items.push({ href: "/cart", icon: ShoppingCart, label: "Cart" });
+    }
+
+    // Settings - เฉพาะ admin และ manager (แต่ manager อ่านได้อย่างเดียว)
+    if (hasPermission("settings", "read")) {
+      items.push({ href: "/settings", icon: Settings, label: "Settings" });
+    }
+
+    return items;
+  };
+
+  const menuItems = getMenuItems();
 
   return (
     <div
@@ -175,7 +213,7 @@ export default function Sidebar({ collapsed, onToggle }) {
         {/* Main Menu */}
         {!collapsed && (
           <div className="text-xs uppercase text-gray-400 tracking-wider px-1 mb-3 font-semibold">
-            Main Menu
+            Main Menu - {userRole?.toUpperCase() || "GUEST"}
           </div>
         )}
 
@@ -192,8 +230,8 @@ export default function Sidebar({ collapsed, onToggle }) {
           ))}
         </div>
 
-        {/* Categories Dropdown
-        {!collapsed && (
+        {/* Categories Dropdown - เฉพาะ admin และ manager */}
+        {!collapsed && hasPermission("categories", "read") && (
           <div className="pt-4">
             <div className="text-xs uppercase text-gray-400 tracking-wider px-1 mb-3 font-semibold">
               Categories
@@ -201,40 +239,42 @@ export default function Sidebar({ collapsed, onToggle }) {
           </div>
         )}
 
-        <NavItem
-          icon={ShoppingBag}
-          label="All Categories"
-          isDropdown
-          isExpanded={categoriesExpanded}
-          onToggle={() => setCategoriesExpanded(!categoriesExpanded)}
-          collapsed={collapsed}
-          active={pathname.startsWith("/categories")}
-        >
-          <Link
-            href="/categories"
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-green-600 hover:bg-green-50 transition-colors"
+        {hasPermission("categories", "read") && (
+          <NavItem
+            icon={ShoppingBag}
+            label="All Categories"
+            isDropdown
+            isExpanded={categoriesExpanded}
+            onToggle={() => setCategoriesExpanded(!categoriesExpanded)}
+            collapsed={collapsed}
+            active={pathname.startsWith("/categories")}
           >
-            <ShoppingBag className="w-4 h-4" />
-            <span>All Categories</span>
-          </Link>
-          {categories.map((category) => {
-            const CategoryIcon = getCategoryIcon(category.name);
-            return (
-              <Link
-                key={category._id}
-                href={`/categories/${category._id}`}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  pathname === `/categories/${category._id}`
-                    ? "bg-green-100 text-green-700"
-                    : "text-gray-600 hover:text-green-600 hover:bg-green-50"
-                }`}
-              >
-                <CategoryIcon className="w-4 h-4" />
-                <span className="truncate">{category.name}</span>
-              </Link>
-            );
-          })}
-        </NavItem> */}
+            <Link
+              href="/categories"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-green-600 hover:bg-green-50 transition-colors"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span>All Categories</span>
+            </Link>
+            {categories.map((category) => {
+              const CategoryIcon = getCategoryIcon(category.name);
+              return (
+                <Link
+                  key={category._id}
+                  href={`/categories/${category._id}`}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    pathname === `/categories/${category._id}`
+                      ? "bg-green-100 text-green-700"
+                      : "text-gray-600 hover:text-green-600 hover:bg-green-50"
+                  }`}
+                >
+                  <CategoryIcon className="w-4 h-4" />
+                  <span className="truncate">{category.name}</span>
+                </Link>
+              );
+            })}
+          </NavItem>
+        )}
       </div>
 
       {/* Footer */}
@@ -245,13 +285,15 @@ export default function Sidebar({ collapsed, onToggle }) {
           </div>
         )}
         <div className="space-y-1">
-          <NavItem
-            href="/settings"
-            icon={Settings}
-            label="Settings"
-            collapsed={collapsed}
-            active={pathname === "/settings"}
-          />
+          {hasPermission("settings", "read") && (
+            <NavItem
+              href="/settings"
+              icon={Settings}
+              label="Settings"
+              collapsed={collapsed}
+              active={pathname === "/settings"}
+            />
+          )}
           <NavItem
             icon={LogOut}
             label="Logout"

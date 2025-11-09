@@ -6,7 +6,8 @@ import {
   createContext,
   useContext,
 } from "react";
-import { productApi, ApiError } from "../lib/api";
+import { productsApi, ApiError } from "../lib/api";
+import { checkLoginStatus, hasPermission } from "../lib/auth";
 
 const ProductsContext = createContext(null);
 
@@ -15,15 +16,24 @@ export function ProductsProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const fetchProducts = useCallback(async () => {
+    // ตรวจสอบ login status และ permission ก่อน
+    const loggedIn = await checkLoginStatus();
+    if (!loggedIn || !hasPermission("products", "read")) {
+      setProducts([]);
+      setError(null);
+      return;
+    }
+
     // แสดง loading เฉพาะเมื่อไม่เคยโหลดมาก่อน
     if (!isInitialized) {
       setLoading(true);
     }
     setError(null);
     try {
-      const data = await productApi.getAll();
+      const data = await productsApi.getAll();
       setProducts(data);
       if (!isInitialized) {
         setIsInitialized(true);
@@ -44,11 +54,52 @@ export function ProductsProvider({ children }) {
     fetchProducts();
   }, [fetchProducts]);
 
+  // ตรวจสอบและ listen การเปลี่ยนแปลง login status
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      const loginStatus = await checkLoginStatus();
+      setIsLoggedIn(loginStatus);
+
+      if (loginStatus && hasPermission("products", "read")) {
+        fetchProducts();
+      } else {
+        // เมื่อ logout หรือไม่มีสิทธิ์ ให้เคลียร์ข้อมูล
+        setProducts([]);
+        setError(null);
+        setIsInitialized(false);
+      }
+    };
+
+    // เช็คสถานะเริ่มต้น
+    checkAuthStatus();
+
+    // Listen storage changes (เมื่อ login/logout)
+    const handleStorageChange = (e) => {
+      if (e.key === "isLoggedIn" || e.key === "authToken") {
+        checkAuthStatus();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    // Custom event สำหรับ same-tab changes
+    const handleAuthChange = () => {
+      checkAuthStatus();
+    };
+
+    window.addEventListener("auth-changed", handleAuthChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("auth-changed", handleAuthChange);
+    };
+  }, [fetchProducts]);
+
   // สร้างสินค้าใหม่
   const createProduct = useCallback(async (productData) => {
     setError(null);
     try {
-      const newProduct = await productApi.create(productData);
+      const newProduct = await productsApi.create(productData);
       setProducts((prev) => [...prev, newProduct]);
       return newProduct;
     } catch (err) {
@@ -63,7 +114,7 @@ export function ProductsProvider({ children }) {
   const updateProduct = useCallback(async (id, productData) => {
     setError(null);
     try {
-      const updatedProduct = await productApi.update(id, productData);
+      const updatedProduct = await productsApi.update(id, productData);
       setProducts((prev) =>
         prev.map((product) => (product._id === id ? updatedProduct : product))
       );
@@ -82,7 +133,7 @@ export function ProductsProvider({ children }) {
   const deleteProduct = useCallback(async (id) => {
     setError(null);
     try {
-      await productApi.delete(id);
+      await productsApi.delete(id);
       setProducts((prev) => prev.filter((product) => product._id !== id));
     } catch (err) {
       setError(
@@ -149,7 +200,7 @@ export function useProduct(id) {
     setLoading(true);
     setError(null);
     try {
-      const data = await productApi.getById(id);
+      const data = await productsApi.getById(id);
       setProduct(data);
     } catch (err) {
       setError(
