@@ -147,10 +147,10 @@ export default function Sidebar({ collapsed, onToggle }) {
       items.push({ href: "/data", icon: Package, label: "Products" });
     }
 
-    // Categories Management - เฉพาะ admin และ manager
-    if (hasPermission("categories", "read")) {
-      items.push({ href: "/categories", icon: BarChart3, label: "Categories" });
-    }
+    // // Categories Management - เฉพาะ admin และ manager
+    // if (hasPermission("categories", "read")) {
+    //   items.push({ href: "/categories", icon: BarChart3, label: "Categories" });
+    // }
 
     // Users Management - เฉพาะ admin
     if (hasPermission("users", "read")) {
@@ -162,15 +162,15 @@ export default function Sidebar({ collapsed, onToggle }) {
       items.push({ href: "/orders", icon: FileText, label: "Orders" });
     }
 
-    // Cart - ทุกคน
-    if (hasPermission("cart", "read")) {
-      items.push({ href: "/cart", icon: ShoppingCart, label: "Cart" });
-    }
+    // // Cart - ทุกคน
+    // if (hasPermission("cart", "read")) {
+    //   items.push({ href: "/cart", icon: ShoppingCart, label: "Cart" });
+    // }
 
-    // Settings - เฉพาะ admin และ manager (แต่ manager อ่านได้อย่างเดียว)
-    if (hasPermission("settings", "read")) {
-      items.push({ href: "/settings", icon: Settings, label: "Settings" });
-    }
+    // // Settings - เฉพาะ admin และ manager (แต่ manager อ่านได้อย่างเดียว)
+    // if (hasPermission("settings", "read")) {
+    //   items.push({ href: "/settings", icon: Settings, label: "Settings" });
+    // }
 
     return items;
   };
@@ -230,16 +230,16 @@ export default function Sidebar({ collapsed, onToggle }) {
           ))}
         </div>
 
-        {/* Categories Dropdown - เฉพาะ admin และ manager */}
+        {/* Categories Dropdown - เฉพาะ admin และ manager
         {!collapsed && hasPermission("categories", "read") && (
           <div className="pt-4">
             <div className="text-xs uppercase text-gray-400 tracking-wider px-1 mb-3 font-semibold">
               Categories
             </div>
           </div>
-        )}
+        )} */}
 
-        {hasPermission("categories", "read") && (
+        {/* {hasPermission("categories", "read") && (
           <NavItem
             icon={ShoppingBag}
             label="All Categories"
@@ -274,7 +274,7 @@ export default function Sidebar({ collapsed, onToggle }) {
               );
             })}
           </NavItem>
-        )}
+        )} */}
       </div>
 
       {/* Footer */}

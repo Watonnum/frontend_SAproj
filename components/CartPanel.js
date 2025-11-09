@@ -54,7 +54,7 @@ export default function CartPanel({ showToast }) {
       {/* Header */}
       <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-green-100">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-800">Order Details</h2>
+          <h2 className="text-xl font-bold text-gray-800">Cart Details</h2>
           <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
             {cart.items.length}
           </div>
