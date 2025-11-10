@@ -203,7 +203,7 @@ function DataPage() {
         </div>
 
         {/* Filters */}
-        <Card className="mb-6">
+        <Card className="mb-3">
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <CardTitle>ค้นหาและกรองข้อมูล</CardTitle>

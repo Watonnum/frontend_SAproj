@@ -2,13 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { CartProvider } from "@/hooks/useCart";
-import Sidebar from "../../components/Sidebar";
 import ProductGrid from "@/components/ProductGrid";
 import CartPanel from "../../components/CartPanel";
 import Toast from "../../components/Toast";
 
 export default function POSPage() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [toast, setToast] = useState({
     show: false,
     message: "",
@@ -26,7 +24,7 @@ export default function POSPage() {
 
   return (
     <CartProvider>
-      <div className="h-screen flex bg-gray-50 overflow-hidden">
+      <div className="h-full flex bg-gray-50 overflow-hidden">
         {/* Toast Notification */}
         {toast.show && (
           <Toast
@@ -35,18 +33,6 @@ export default function POSPage() {
             onClose={() => setToast({ show: false, message: "", type: "info" })}
           />
         )}
-
-        {/* Sidebar */}
-        <div
-          className={`transition-all duration-300 ${
-            sidebarCollapsed ? "w-16" : "w-64"
-          } flex-shrink-0`}
-        >
-          <Sidebar
-            collapsed={sidebarCollapsed}
-            onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-          />
-        </div>
 
         {/* Main Content Area */}
         <div className="flex-1 flex overflow-hidden">

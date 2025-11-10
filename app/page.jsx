@@ -8,7 +8,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Card */}
-        <Card className="mb-6">
+        <Card className="mb-3">
           <CardHeader className="flex justify-between">
             <CardTitle>
               <p className="text-3xl">Welcomeback Boss</p>
@@ -17,12 +17,12 @@ export default function Home() {
               </p>
             </CardTitle>
             <div className="flex justify-center items-center">
-              <button
+              {/* <button
                 type="button"
                 className="border rounded-full opacity-40 cursor-pointer hover:opacity-100 mx-4 p-3 duration-200"
               >
                 <Bell />
-              </button>
+              </button> */}
 
               {/* Profile */}
               <div className="flex rounded-xl p-2 border border-transparent hover:border-gray-400 transition-colors cursor-pointer duration-200">
@@ -45,16 +45,7 @@ export default function Home() {
         </Card>
 
         {/* Main Content */}
-        <div className="space-y-6">
-          {/* Search Section */}
-          <Card>
-            <CardContent>
-              <div className="w-full max-w-md">
-                <Search />
-              </div>
-            </CardContent>
-          </Card>
-
+        <div className="space-y-3">
           {/* Summary Cards - Placeholder for future metrics */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
@@ -93,7 +84,7 @@ export default function Home() {
           </div>
 
           {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {/* Transaction Activity */}
             <Card>
               <CardHeader>

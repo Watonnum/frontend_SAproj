@@ -39,8 +39,14 @@ export default function CartPanel({ showToast }) {
 
   const handleUpdateQuantity = async (itemId, newQuantity) => {
     if (newQuantity <= 0) {
-      await removeItem(itemId);
-      showToast("ลบสินค้าจากตระกร้าเรียบร้อย", "success");
+      // หา productId จาก itemId
+      const item = cart.items.find((i) => i._id === itemId);
+      const productId = item?.productId?._id || item?.productId;
+
+      if (productId) {
+        await removeItem(productId);
+        showToast("ลบสินค้าจากตระกร้าเรียบร้อย", "success");
+      }
     } else {
       await updateQuantity(itemId, newQuantity);
     }
@@ -58,18 +64,6 @@ export default function CartPanel({ showToast }) {
           <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
             {cart.items.length}
           </div>
-        </div>
-      </div>
-
-      {/* Order Type Tabs */}
-      <div className="px-6 py-4 border-b border-gray-100">
-        <div className="flex bg-gray-100 rounded-lg p-1">
-          <button className="flex-1 py-2 px-4 bg-green-500 text-white rounded-md text-sm font-medium">
-            Dine In
-          </button>
-          <button className="flex-1 py-2 px-4 text-gray-600 text-sm font-medium">
-            Take Away
-          </button>
         </div>
       </div>
 
@@ -92,7 +86,12 @@ export default function CartPanel({ showToast }) {
                     {item.productId?.name || "Product"}
                   </h3>
                   <button
-                    onClick={() => removeItem(item._id)}
+                    onClick={() => {
+                      const productId = item.productId?._id || item.productId;
+                      if (productId) {
+                        removeItem(productId);
+                      }
+                    }}
                     className="text-red-500 hover:text-red-700 disabled:opacity-50"
                     disabled={loading || actionLoading[`remove-${item._id}`]}
                   >

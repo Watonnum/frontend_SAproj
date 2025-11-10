@@ -43,16 +43,16 @@ const NavItem = ({
     return (
       <button
         onClick={onClick}
-        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 w-full text-left group ${
+        className={`flex items-center transition-all duration-200 w-full text-left group rounded-xl text-sm font-medium ${
+          collapsed ? "justify-center px-2 py-3" : "gap-3 px-4 py-3"
+        } ${
           active
             ? "bg-green-500 text-white shadow-lg"
             : "text-gray-600 hover:text-green-600 hover:bg-green-50"
         }`}
         title={collapsed ? label : ""}
       >
-        <Icon
-          className={`${collapsed ? "w-5 h-5" : "w-5 h-5"} flex-shrink-0`}
-        />
+        <Icon className="w-5 h-5 flex-shrink-0" />
         {!collapsed && <span className="truncate">{label}</span>}
       </button>
     );
@@ -63,7 +63,9 @@ const NavItem = ({
       <div className="space-y-1">
         <button
           onClick={onToggle}
-          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 w-full text-left group ${
+          className={`flex items-center transition-all duration-200 w-full text-left group rounded-xl text-sm font-medium ${
+            collapsed ? "justify-center px-2 py-3" : "gap-3 px-4 py-3"
+          } ${
             active
               ? "bg-green-500 text-white shadow-lg"
               : "text-gray-600 hover:text-green-600 hover:bg-green-50"
@@ -94,7 +96,9 @@ const NavItem = ({
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
+      className={`flex items-center transition-all duration-200 group rounded-xl text-sm font-medium ${
+        collapsed ? "justify-center px-2 py-3" : "gap-3 px-4 py-3"
+      } ${
         active
           ? "bg-green-500 text-white shadow-lg"
           : "text-gray-600 hover:text-green-600 hover:bg-green-50"
@@ -147,11 +151,6 @@ export default function Sidebar({ collapsed, onToggle }) {
       items.push({ href: "/data", icon: Package, label: "Products" });
     }
 
-    // // Categories Management - เฉพาะ admin และ manager
-    // if (hasPermission("categories", "read")) {
-    //   items.push({ href: "/categories", icon: BarChart3, label: "Categories" });
-    // }
-
     // Users Management - เฉพาะ admin
     if (hasPermission("users", "read")) {
       items.push({ href: "/accounts", icon: Users, label: "Users" });
@@ -162,16 +161,6 @@ export default function Sidebar({ collapsed, onToggle }) {
       items.push({ href: "/orders", icon: FileText, label: "Orders" });
     }
 
-    // // Cart - ทุกคน
-    // if (hasPermission("cart", "read")) {
-    //   items.push({ href: "/cart", icon: ShoppingCart, label: "Cart" });
-    // }
-
-    // // Settings - เฉพาะ admin และ manager (แต่ manager อ่านได้อย่างเดียว)
-    // if (hasPermission("settings", "read")) {
-    //   items.push({ href: "/settings", icon: Settings, label: "Settings" });
-    // }
-
     return items;
   };
 
@@ -179,13 +168,17 @@ export default function Sidebar({ collapsed, onToggle }) {
 
   return (
     <div
-      className={`h-full bg-white border-r border-gray-200 transition-all duration-300 flex flex-col shadow-sm ${
+      className={`h-full bg-white border-r border-gray-200 transition-all duration-200 flex flex-col shadow-sm ${
         collapsed ? "w-16" : "w-64"
       }`}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-100">
-        <div className="flex items-center justify-between">
+      <div className={`border-b border-gray-100 ${collapsed ? "p-2" : "p-4"}`}>
+        <div
+          className={`flex items-center ${
+            collapsed ? "justify-center" : "justify-between"
+          }`}
+        >
           {!collapsed && (
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
@@ -209,7 +202,9 @@ export default function Sidebar({ collapsed, onToggle }) {
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 px-3 py-4 space-y-2">
+      <div
+        className={`flex-1 space-y-2 ${collapsed ? "px-2 py-4" : "px-3 py-4"}`}
+      >
         {/* Main Menu */}
         {!collapsed && (
           <div className="text-xs uppercase text-gray-400 tracking-wider px-1 mb-3 font-semibold">
@@ -278,7 +273,11 @@ export default function Sidebar({ collapsed, onToggle }) {
       </div>
 
       {/* Footer */}
-      <div className="px-3 py-4 border-t border-gray-100">
+      <div
+        className={`border-t border-gray-100 ${
+          collapsed ? "px-2 py-4" : "px-3 py-4"
+        }`}
+      >
         {!collapsed && (
           <div className="text-xs uppercase text-gray-400 tracking-wider px-1 mb-3 font-semibold">
             Account
