@@ -3,7 +3,7 @@
 import "./globals.css";
 import { usePathname } from "next/navigation";
 import Sidebar from "../components/Sidebar";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { AuthProvider, useAuth } from "../hooks/useAuth";
 import { UsersProvider } from "../hooks/useUsers";
 import { ProductsProvider } from "../hooks/useProducts";
@@ -99,7 +99,17 @@ export default function RootLayout({ children }) {
             </AuthProvider>
           </UsersProvider>
         </ClientOnly>
-        <Toaster position="top-right" richColors closeButton />
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton
+          toastOptions={{
+            action: {
+              label: "Clear All",
+              onClick: () => toast.dismiss(),
+            },
+          }}
+        />
       </body>
     </html>
   );

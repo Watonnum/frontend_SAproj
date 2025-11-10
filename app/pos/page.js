@@ -22,17 +22,27 @@ export default function POSPage() {
     );
   };
 
+  // ปิดการแจ้งเตือนทั้งหมด
+  const clearAllToasts = () => {
+    setToast({ show: false, message: "", type: "info" });
+  };
+
   return (
     <CartProvider>
       <div className="h-full flex bg-gray-50 overflow-hidden">
         {/* Toast Notification */}
-        {toast.show && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast({ show: false, message: "", type: "info" })}
-          />
-        )}
+        {/* {
+          toast.show
+          // && (
+          //   <Toast
+          //     message={toast.message}
+          //     type={toast.type}
+          //     isVisible={toast.show}
+          //     onClose={() => setToast({ show: false, message: "", type: "info" })}
+          //     onClearAll={clearAllToasts}
+          //   />
+          // )
+        } */}
 
         {/* Main Content Area */}
         <div className="flex-1 flex overflow-hidden">

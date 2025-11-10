@@ -3,6 +3,7 @@ export default function Toast({
   type = "info",
   isVisible,
   onClose,
+  onClearAll,
   duration = 5000,
 }) {
   const types = {
@@ -90,10 +91,22 @@ export default function Toast({
               {message}
             </p>
           </div>
-          <div className="ml-4 flex-shrink-0">
+          <div className="ml-4 flex-shrink-0 flex items-center space-x-2">
+            {/* ปุ่มลบทั้งหมด */}
+            {onClearAll && (
+              <button
+                onClick={onClearAll}
+                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium transition-colors ${types[type].text} hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-offset-2`}
+                title="ลบการแจ้งเตือนทั้งหมด"
+              >
+                Clear All
+              </button>
+            )}
+            {/* ปุ่มปิด */}
             <button
               onClick={onClose}
               className={`inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2 ${types[type].text} hover:bg-opacity-20`}
+              title="ปิดการแจ้งเตือนนี้"
             >
               <svg
                 className="w-4 h-4"
