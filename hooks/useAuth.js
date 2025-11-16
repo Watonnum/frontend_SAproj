@@ -224,12 +224,18 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // ฟังก์ชันดึง token จาก localStorage
+  const getToken = useCallback(() => {
+    return localStorage.getItem("authToken");
+  }, []);
+
   const value = {
     isLoggedIn,
     user,
     login,
     logout,
     loading,
+    getToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

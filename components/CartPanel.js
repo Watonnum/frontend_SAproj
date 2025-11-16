@@ -25,11 +25,27 @@ export default function CartPanel({ showToast }) {
   };
 
   const handleProcessTransaction = () => {
+    console.log("🔵 Process Transaction clicked");
+    console.log("Cart items:", cart.items.length);
+    console.log("Loading:", loading);
+
     if (cart.items.length === 0) {
       showToast("กรุณาเลือกสินค้าก่อนทำการชำระเงิน", "warning");
       return;
     }
-    router.push("/payment");
+
+    console.log("🚀 Navigating to /payment");
+    try {
+      // ใช้ window.location สำรอง ถ้า router.push ไม่ทำงาน
+      if (typeof window !== "undefined") {
+        window.location.href = "/payment";
+      } else {
+        router.push("/payment");
+      }
+    } catch (error) {
+      console.error("Navigation error:", error);
+      showToast("เกิดข้อผิดพลาดในการไปหน้าชำระเงิน", "error");
+    }
   };
 
   const handleClearCart = () => {

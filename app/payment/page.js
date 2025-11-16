@@ -11,6 +11,7 @@ import {
   Clock,
 } from "lucide-react";
 import { CartContext } from "@/hooks/useCart";
+import { useOrders } from "@/hooks/useOrders";
 import Button from "../../components/Button";
 import Toast from "../../components/Toast";
 
@@ -20,6 +21,7 @@ export default function PaymentPage() {
     cart: { items: [], totalAmount: 0, totalItems: 0 },
     clearCart: () => {},
   };
+  const { createOrder } = useOrders();
 
   const [paymentStatus, setPaymentStatus] = useState("pending"); // 'pending', 'processing', 'completed'
   const [toast, setToast] = useState({
@@ -45,34 +47,39 @@ export default function PaymentPage() {
     );
   };
 
-  const handlePaymentConfirm = async () => {
+  const handlePaymentConfirm = async (paymentMethod = "cash") => {
     setPaymentStatus("processing");
 
-    // จำลองการประมวลผลการชำระเงิน
-    setTimeout(async () => {
-      try {
-        // สร้างข้อมูลคำสั่งซื้อ
-        const order = {
-          id: `ORD-${Date.now()}`,
-          items: cart.items,
-          subtotal: cart.totalAmount,
-          tax: cart.totalAmount * 0.07,
-          total: cart.totalAmount + cart.totalAmount * 0.07,
-          timestamp: new Date(),
-          status: "completed",
-        };
+    try {
+      // เรียก API สร้าง order
+      const order = await createOrder({
+        paymentMethod: paymentMethod,
+        notes: "",
+      });
 
-        setOrderDetails(order);
+      if (order) {
+        setOrderDetails({
+          id: order.orderId,
+          items: order.items,
+          subtotal: order.totalAmount,
+          tax: 0,
+          total: order.totalAmount,
+          timestamp: order.createdAt,
+          status: order.status,
+          _id: order._id,
+        });
+
         setPaymentStatus("completed");
         showToast("ชำระเงินเรียบร้อยแล้ว!", "success");
 
         // ล้างตระกร้าหลังจากชำระเงินสำเร็จ
         await clearCart();
-      } catch (error) {
-        setPaymentStatus("pending");
-        showToast("เกิดข้อผิดพลาดในการชำระเงิน", "error");
       }
-    }, 2000);
+    } catch (error) {
+      console.error("Payment error:", error);
+      setPaymentStatus("pending");
+      showToast(error.message || "เกิดข้อผิดพลาดในการชำระเงิน", "error");
+    }
   };
 
   const handlePrintReceipt = () => {
@@ -223,7 +230,7 @@ export default function PaymentPage() {
                 </div>
 
                 <Button
-                  onClick={handlePaymentConfirm}
+                  onClick={() => handlePaymentConfirm("cash")}
                   className="w-full bg-green-500 hover:bg-green-600 text-white py-4 text-lg font-semibold"
                 >
                   ยืนยันการชำระเงิน ${finalTotal.toFixed(2)}
