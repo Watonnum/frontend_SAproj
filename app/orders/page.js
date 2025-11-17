@@ -41,7 +41,7 @@ const STATUS_TEXT = {
 
 export default function OrdersPage() {
   const { user } = useAuth();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, loading: permissionLoading } = usePermissions();
   const {
     orders,
     loading,
@@ -59,6 +59,7 @@ export default function OrdersPage() {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   const canViewAll = hasPermission("orders", "read");
   const canUpdate = hasPermission("orders", "update");
@@ -80,7 +81,19 @@ export default function OrdersPage() {
   };
 
   useEffect(() => {
-    loadOrders();
+    // รอให้ user และ permission โหลดเสร็จก่อน
+    if (user && !permissionLoading && !hasLoaded) {
+      loadOrders();
+      setHasLoaded(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, permissionLoading]);
+
+  // useEffect แยกสำหรับ statusFilter เพื่อไม่ให้ conflict
+  useEffect(() => {
+    if (hasLoaded) {
+      loadOrders();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
