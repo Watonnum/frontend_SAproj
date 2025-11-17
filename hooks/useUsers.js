@@ -90,7 +90,7 @@ export function UsersProvider({ children }) {
     };
   }, [fetchUsers]);
 
-  const createUser = useCallback(async (userData) => {
+  const createUsers = useCallback(async (userData) => {
     setLoading(true);
     setError(null);
     try {
@@ -122,7 +122,7 @@ export function UsersProvider({ children }) {
     }
   }, []);
 
-  const deleteUser = useCallback(async (id) => {
+  const deleteUsers = useCallback(async (id) => {
     setLoading(true);
     setError(null);
     try {
@@ -136,14 +136,31 @@ export function UsersProvider({ children }) {
     }
   }, []);
 
+  const bulkDeleteUsers = useCallback(async (ids) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await usersApi.bulkDelete(ids);
+      setUsers((prev) => prev.filter((user) => !ids.includes(user._id)));
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Failed to bulk delete users"
+      );
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const value = {
     users,
     loading,
     error,
     fetchUsers,
-    createUser,
+    createUsers,
     updateUsers,
-    deleteUser,
+    deleteUsers,
+    bulkDeleteUsers,
     setUsers,
   };
 
