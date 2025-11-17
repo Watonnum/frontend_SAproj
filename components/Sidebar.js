@@ -147,9 +147,9 @@ export default function Sidebar({ collapsed, onToggle }) {
     }
 
     // Products Management - เฉพาะ admin และ manager
-    if (hasPermission("products", "read")) {
-      items.push({ href: "/data", icon: Package, label: "Products" });
-    }
+    // if (hasPermission("products", "read")) {
+    //   items.push({ href: "/data", icon: Package, label: "Products" });
+    // }
 
     // Users Management - เฉพาะ admin
     if (hasPermission("users", "read")) {
@@ -224,52 +224,6 @@ export default function Sidebar({ collapsed, onToggle }) {
             />
           ))}
         </div>
-
-        {/* Categories Dropdown - เฉพาะ admin และ manager
-        {!collapsed && hasPermission("categories", "read") && (
-          <div className="pt-4">
-            <div className="text-xs uppercase text-gray-400 tracking-wider px-1 mb-3 font-semibold">
-              Categories
-            </div>
-          </div>
-        )} */}
-
-        {/* {hasPermission("categories", "read") && (
-          <NavItem
-            icon={ShoppingBag}
-            label="All Categories"
-            isDropdown
-            isExpanded={categoriesExpanded}
-            onToggle={() => setCategoriesExpanded(!categoriesExpanded)}
-            collapsed={collapsed}
-            active={pathname.startsWith("/categories")}
-          >
-            <Link
-              href="/categories"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-green-600 hover:bg-green-50 transition-colors"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span>All Categories</span>
-            </Link>
-            {categories.map((category) => {
-              const CategoryIcon = getCategoryIcon(category.name);
-              return (
-                <Link
-                  key={category._id}
-                  href={`/categories/${category._id}`}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    pathname === `/categories/${category._id}`
-                      ? "bg-green-100 text-green-700"
-                      : "text-gray-600 hover:text-green-600 hover:bg-green-50"
-                  }`}
-                >
-                  <CategoryIcon className="w-4 h-4" />
-                  <span className="truncate">{category.name}</span>
-                </Link>
-              );
-            })}
-          </NavItem>
-        )} */}
       </div>
 
       {/* Footer */}

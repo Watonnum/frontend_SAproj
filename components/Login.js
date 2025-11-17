@@ -51,6 +51,18 @@ const saveRecentAccount = (accountData) => {
   }
 };
 
+const removeRecentAccount = (email) => {
+  try {
+    let accounts = getRecentAccounts();
+    accounts = accounts.filter((acc) => acc.email !== email);
+    localStorage.setItem("recentAccounts", JSON.stringify(accounts));
+    return accounts;
+  } catch (error) {
+    console.error("Failed to remove recent account:", error);
+    return getRecentAccounts();
+  }
+};
+
 // ฟังก์ชันดึงข้อมูล user จาก API
 const getUserByEmail = async (email) => {
   try {
@@ -116,6 +128,13 @@ const saveUserToStorage = (userData) => {
 function AccountPicker({ onSelectAccount, onAddNew }) {
   const [recentAccounts, setRecentAccounts] = useState([]);
 
+  const handleRemoveAccount = (e, email) => {
+    e.stopPropagation(); // ป้องกันไม่ให้เปิด account เมื่อกดปุ่มลบ
+    const updatedAccounts = removeRecentAccount(email);
+    setRecentAccounts(updatedAccounts);
+    toast.success("Account removed from recent list");
+  };
+
   // ดึงข้อมูล recent accounts และ update ข้อมูลจาก API
   useEffect(() => {
     const fetchAccountsData = async () => {
@@ -123,50 +142,20 @@ function AccountPicker({ onSelectAccount, onAddNew }) {
       console.log("🔄 Original accounts from localStorage:", accounts);
 
       // Update ข้อมูลจาก API สำหรับแต่ละ account
-      const updatedAccounts = await Promise.all(
-        accounts.map(async (account) => {
-          try {
-            // ดึงข้อมูลล่าสุดจาก API
-            const apiData = await getUserByEmail(account.email);
-            console.log(`🔍 API data for ${account.email}:`, apiData);
+      // แต่ไม่ต้องเรียก API เพราะหน้า login ไม่ต้องการ authentication
+      const updatedAccounts = accounts.map((account) => {
+        // ไม่เรียก API ในหน้า login เพราะยังไม่มี token
+        // ใช้ข้อมูลจาก localStorage แทน
+        const fallback = {
+          ...account,
+          fName: account.fName || account.email.split("@")[0],
+        };
+        console.log(`📦 Using stored data for ${account.email}:`, fallback);
+        return fallback;
+      });
 
-            if (apiData && apiData.fName) {
-              const updated = {
-                ...account,
-                fName: apiData.fName, // ใช้ชื่อจาก API แทน
-                role: apiData.role,
-              };
-              console.log(`✅ Updated account for ${account.email}:`, updated);
-              return updated;
-            } else {
-              // ถ้าไม่มีข้อมูลใน API หรือไม่มี fName ให้ใช้ email เป็นชื่อแสดง
-              const fallback = {
-                ...account,
-                fName: account.fName || account.email.split("@")[0], // ใช้ชื่อก่อน @ หรือใช้ email
-              };
-              console.log(`⚠️ Using fallback for ${account.email}:`, fallback);
-              return fallback;
-            }
-          } catch (error) {
-            console.error(
-              `❌ Failed to update data for ${account.email}:`,
-              error
-            );
-            return account;
-          }
-        })
-      );
-
-      console.log("📦 Final updated accounts:", updatedAccounts);
+      console.log("📦 Final accounts from localStorage:", updatedAccounts);
       setRecentAccounts(updatedAccounts);
-
-      // อัปเดต localStorage ด้วยข้อมูลใหม่จาก API
-      try {
-        localStorage.setItem("recentAccounts", JSON.stringify(updatedAccounts));
-        console.log("💾 Updated localStorage with fresh API data");
-      } catch (error) {
-        console.error("Failed to update localStorage:", error);
-      }
     };
 
     fetchAccountsData();
@@ -184,9 +173,18 @@ function AccountPicker({ onSelectAccount, onAddNew }) {
           {recentAccounts.map((account, index) => (
             <div
               key={account.email}
-              className="flex flex-col items-center gap-3 cursor-pointer group"
+              className="flex flex-col items-center gap-3 cursor-pointer group relative"
               onClick={() => onSelectAccount(account)}
             >
+              {/* ปุ่มลบ account */}
+              <button
+                onClick={(e) => handleRemoveAccount(e, account.email)}
+                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                title="Remove account"
+              >
+                <span className="text-sm font-bold">×</span>
+              </button>
+
               <div
                 className={`w-24 h-24 rounded-lg ${avatarColors[index]} flex items-center justify-center group-hover:ring-4 group-hover:ring-white/50 transition-all duration-200`}
               >
